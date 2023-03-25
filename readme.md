@@ -61,6 +61,10 @@ You can make a support for this work by [DONATING](./DONATE.md). Thank you.
 
 ## Running In Server
 
+Jalankan :
+`sudo apt-get install -y libgbm1 libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm-dev`
+untuk install dependency
+
 Menjalankan diserver perlu package PM2, Untuk menggunakan process manager seperti PM2 untuk menjalankan aplikasi Node.js, Anda dapat mengikuti langkah-langkah berikut:
 
 - Install PM2 melalui command-line dengan menjalankan perintah npm install pm2 -g. Jika Anda menggunakan server Linux, Anda mungkin perlu menambahkan sudo di depan perintah untuk menjalankan sebagai superuser.
