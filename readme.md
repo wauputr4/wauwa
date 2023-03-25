@@ -58,3 +58,15 @@ And we decided (for this example) to use time as the filename, because the media
 ## Support Me
 
 You can make a support for this work by [DONATING](./DONATE.md). Thank you.
+
+##Running In Server
+Menjalankan diserver perlu package PM2, Untuk menggunakan process manager seperti PM2 untuk menjalankan aplikasi Node.js, Anda dapat mengikuti langkah-langkah berikut:
+
+- Install PM2 melalui command-line dengan menjalankan perintah npm install pm2 -g. Jika Anda menggunakan server Linux, Anda mungkin perlu menambahkan sudo di depan perintah untuk menjalankan sebagai superuser.
+- Masuk ke direktori aplikasi Node.js Anda di command-line dan jalankan perintah pm2 start <nama_file_app.js> untuk memulai aplikasi. Pastikan untuk mengganti <nama_file_app.js> dengan nama file yang benar.
+- PM2 akan memulai aplikasi dan memberikan nomor id untuk memudahkan manajemen proses. Anda dapat menggunakan perintah pm2 list untuk melihat daftar proses yang sedang berjalan.
+- Anda juga dapat menggunakan perintah pm2 stop <id> untuk menghentikan proses, atau pm2 restart <id> untuk memulai ulang proses.
+- PM2 akan secara otomatis memulai aplikasi setelah restart atau kegagalan, sehingga aplikasi akan berjalan terus-menerus.
+- Jika Anda ingin memastikan PM2 tetap berjalan di background, Anda dapat menggunakan perintah pm2 startup untuk memulai PM2 sebagai layanan sistem, sehingga PM2 akan memulai otomatis setelah reboot.
+
+dapat membaca dokumentasi PM2 di https://pm2.keymetrics.io/.
