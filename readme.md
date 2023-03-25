@@ -63,7 +63,8 @@ You can make a support for this work by [DONATING](./DONATE.md). Thank you.
 
 Jalankan :
 `sudo apt-get install -y libgbm1 libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm-dev`
-untuk install dependency
+untuk install dependency, kemudian : 
+`npm install puppeteer@latest`
 
 Menjalankan diserver perlu package PM2, Untuk menggunakan process manager seperti PM2 untuk menjalankan aplikasi Node.js, Anda dapat mengikuti langkah-langkah berikut:
 
