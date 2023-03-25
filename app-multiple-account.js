@@ -7,7 +7,7 @@ const fs = require('fs');
 const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 8001;
 
 const app = express();
 const server = http.createServer(app);
@@ -18,14 +18,7 @@ app.use(express.urlencoded({
   extended: true
 }));
 
-/**
- * BASED ON MANY QUESTIONS
- * Actually ready mentioned on the tutorials
- * 
- * The two middlewares above only handle for data json & urlencode (x-www-form-urlencoded)
- * So, we need to add extra middleware to handle form-data
- * Here we can use express-fileupload
- */
+
 app.use(fileUpload({
   debug: false
 }));
@@ -181,35 +174,34 @@ io.on('connection', function(socket) {
 });
 
 // Send message
-app.post('/send-message', async (req, res) => {
-  console.log(req);
+app.post('/api/send-message', async (req, res) => {
+  //console.log(req);
 
-  const sender = req.body.sender;
-  const number = phoneNumberFormatter(req.body.number);
+  const key = req.body.key;
+  const phone_no = phoneNumberFormatter(req.body.phone_no);
   const message = req.body.message;
 
-  // const client = sessions.find(sess => sess.id == sender)?.client;
-  const client = sessions.find(sess => sess.id == sender) && sessions.find(sess => sess.id == sender).client;
+  // const client = sessions.find(sess => sess.id == key)?.client;
+  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
 
-
-  // Make sure the sender is exists & ready
+  // Make sure the key is exists & ready
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: `The sender: ${sender} is not found!`
+      message: `The key: ${key} is not found!`
     })
   }
 
-  const isRegisteredNumber = await client.isRegisteredUser(number);
+  const isRegisteredNumber = await client.isRegisteredUser(phone_no);
 
   if (!isRegisteredNumber) {
     return res.status(422).json({
       status: false,
-      message: 'The number is not registered'
+      message: 'The phone_no is not registered'
     });
   }
 
-  client.sendMessage(number, message)
+  client.sendMessage(phone_no, message)
   .then(response => {
     res.status(200).json({
       status: true,
@@ -221,35 +213,122 @@ app.post('/send-message', async (req, res) => {
       response: err
     });
   }).finally(() => {
-    io.emit('message', { id: sender, text: 'success send message :'+message });
+    io.emit('message', { id: key, text: 'success send message : <br>'+message });
+    console.log('/api/send-message key : '+key+' phone_no: '+phone_no+' message: '+message);
+  });
+
+});
+
+//get chats
+app.get('/api/chats', async (req, res) => {
+  //get Params
+  const { key } = req.query;
+
+  console.log('key '+key);
+
+  //get client session
+  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+
+  // Make sure the key is exists & ready
+  if (!client) {
+    return res.status(422).json({
+      status: false,
+      message: `The key: ${key} is not found!`
+    })
+  }
+
+  // client.getChats()
+  // .then(response => {
+  //   const chats = response.map(chat => {
+  //     return {
+  //       id: chat.id.user,
+  //       name: chat.name,
+  //       isGroup: chat.isGroup
+  //     };
+  //   });
+
+  //   res.status(200).json({
+  //     status: true,
+  //     response: chats
+  //   });
+  // })
+  // .catch(err => {
+  //   res.status(500).json({
+  //     status: false,
+  //     response: err
+  //   });
+  // })
+  // .finally(() => {
+  //   io.emit('message', { id: key, text: 'success get fetchMessages ' });
+  //   console.log('/api/chats key : '+key);
+  // });
+
+  client.getChats({ limit: 5 })
+  .then(response => {
+    const chats = response.map(chat => {
+      return {
+        id: chat.id.user,
+        name: chat.name,
+        isGroup: chat.isGroup
+      };
+    });
+
+    res.status(200).json({
+      status: true,
+      response: chats
+    });
+  })
+  .catch(err => {
+    res.status(500).json({
+      status: false,
+      response: err
+    });
+  })
+  .finally(() => {
+    io.emit('message', { id: key, text: 'success get fetchMessages ' });
+    console.log('/api/chats key : '+key);
+  });
+
+
+
+});
+
+//get labels list
+app.get('/api/labels', async (req, res) => {
+  //get Params
+  const { key } = req.query;
+
+  console.log('key '+key);
+
+  //get client session
+  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+
+  // Make sure the key is exists & ready
+  if (!client) {
+    return res.status(422).json({
+      status: false,
+      message: `The key: ${key} is not found!`
+    })
+  }
+
+  client.getLabels()
+  .then(response => {
+    res.status(200).json({
+      status: true,
+      response: response
+    });
+  }).catch(err => {
+    res.status(500).json({
+      status: false,
+      response: err
+    });
+  }).finally(() => {
+    io.emit('message', { id: key, text: 'success get fetchMessages ' });
+    console.log('/api/group-list key : '+key);
   });
   
-
 });
 
 server.listen(port, function() {
   console.log('App running on *: ' + port);
-});
-
-app.get('/refresh', (req, res) => {
-  res.sendFile('index-multiple-account.html', {
-    root: __dirname
-  });
-
-  // setTimeout(() => {
-  //   console.log('client loop');
-  //   const client = sessions.map(sess => sess.client);
-  //   client.forEach(cl => {
-  //     cl.on('ready', () => {
-  //       io.emit('ready', { id: id });
-  //       io.emit('message', { id: id, text: 'Whatsapp is ready!' });
-    
-  //       const savedSessions = getSessionsFile();
-  //       const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-  //       savedSessions[sessionIndex].ready = true;
-  //       setSessionsFile(savedSessions);
-  //     });
-  //   });
-  // }, 7000); // delay execution by 5 seconds (5000 milliseconds)
-  
 });

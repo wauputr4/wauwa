@@ -1,7 +1,37 @@
+### How to use?
+
+- Clone or download this repo
+- Enter to the project directory
+- Run `npm install`
+- Run `npm run start:dev`
+- Open browser and go to address `http://localhost:8000`
+- Scan the QR Code
+- Enjoy!
+
+## Running In Server
+
+### How To Running in Server :
+- `sudo apt-get install -y libgbm1 libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm-dev`for library whatsappweb
+- `npm install puppeteer@latest` for update dependancy to latest
+
+### Server running 24h with PM2
+Menjalankan diserver perlu package PM2, Untuk menggunakan process manager seperti PM2 untuk menjalankan aplikasi Node.js, Anda dapat mengikuti langkah-langkah berikut:
+
+- Install PM2 melalui command-line dengan menjalankan perintah npm install pm2 -g. Jika Anda menggunakan server Linux, Anda mungkin perlu menambahkan sudo di depan perintah untuk menjalankan sebagai superuser.
+- Masuk ke direktori aplikasi Node.js Anda di command-line dan jalankan perintah pm2 start <nama_file_app.js> untuk memulai aplikasi. Pastikan untuk mengganti <nama_file_app.js> dengan nama file yang benar.
+- PM2 akan memulai aplikasi dan memberikan nomor id untuk memudahkan manajemen proses. Anda dapat menggunakan perintah pm2 list untuk melihat daftar proses yang sedang berjalan.
+- Anda juga dapat menggunakan perintah pm2 stop <id> untuk menghentikan proses, atau pm2 restart <id> untuk memulai ulang proses.
+- PM2 akan secara otomatis memulai aplikasi setelah restart atau kegagalan, sehingga aplikasi akan berjalan terus-menerus.
+- Jika Anda ingin memastikan PM2 tetap berjalan di background, Anda dapat menggunakan perintah pm2 startup untuk memulai PM2 sebagai layanan sistem, sehingga PM2 akan memulai otomatis setelah reboot.
+
+dapat membaca dokumentasi PM2 di https://pm2.keymetrics.io/.
+
+## Endpoint Documentation : 
+https://documenter.getpostman.com/view/19882731/2s93RNyagj
+
+
 # Whatsapp API Tutorial
-
 Hi, this is the implementation example of <a href="https://github.com/pedroslopez/whatsapp-web.js">whatsapp-web.js</a>
-
 Watch the tutorials:
 
 - <a href="https://youtu.be/IRRiN2ZQDc8">Whatsapp API Tutorial: Part 1</a>
@@ -14,65 +44,3 @@ Watch the tutorials:
 - <a href="https://youtu.be/bgxxUWqW6WU">Whatsapp API Tutorial: Fix Heroku Session</a>
 - <a href="https://youtu.be/iode8kstDYQ">Whatsapp API Tutorial: Dynamic Message Reply</a>
 - <a href="https://youtu.be/PF_MWklEQpM">Whatsapp API Tutorial: Fix Session & Support for Multi-Device Beta</a>
-
-## Important thing!
-
-As because Whatsapp regularly makes an update, so we needs to always **use the latest version of whatsapp-web.js**. Some errors may occurs with the old versions, so please try to update the library version before creating an issue.
-
-### How to use?
-
-- Clone or download this repo
-- Enter to the project directory
-- Run `npm install`
-- Run `npm run start:dev`
-- Open browser and go to address `http://localhost:8000`
-- Scan the QR Code
-- Enjoy!
-
-### Send message to group
-
-You can send the message to any group by using `chatID` or group `name`, chatID will used if you specify the `id` field in the form, so if you want to send by `name`, only use name.
-
-**Paramaters:**
-
-- `id` (optional if name given): the chat ID
-- `name` (optional): group name
-- `message`: the message
-
-Here the endpoint: `/send-group-message`
-
-Here the way to get the groups info (including ID & name):
-
-- Send a message to the API number `!groups`
-- The API will replying with the groups info
-- Use the ID to send a message
-
-### Downloading media
-
-I add an example to downloading the message media if exists. Please check it in `on message` event!
-
-We use `mime-types` package to get the file extension by it's mimetype, so we can download all of the type of media message.
-
-And we decided (for this example) to use time as the filename, because the media filename is not certain exists.
-
-## Support Me
-
-You can make a support for this work by [DONATING](./DONATE.md). Thank you.
-
-## Running In Server
-
-Jalankan :
-`sudo apt-get install -y libgbm1 libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm-dev`
-untuk install dependency, kemudian : 
-`npm install puppeteer@latest`
-
-Menjalankan diserver perlu package PM2, Untuk menggunakan process manager seperti PM2 untuk menjalankan aplikasi Node.js, Anda dapat mengikuti langkah-langkah berikut:
-
-- Install PM2 melalui command-line dengan menjalankan perintah npm install pm2 -g. Jika Anda menggunakan server Linux, Anda mungkin perlu menambahkan sudo di depan perintah untuk menjalankan sebagai superuser.
-- Masuk ke direktori aplikasi Node.js Anda di command-line dan jalankan perintah pm2 start <nama_file_app.js> untuk memulai aplikasi. Pastikan untuk mengganti <nama_file_app.js> dengan nama file yang benar.
-- PM2 akan memulai aplikasi dan memberikan nomor id untuk memudahkan manajemen proses. Anda dapat menggunakan perintah pm2 list untuk melihat daftar proses yang sedang berjalan.
-- Anda juga dapat menggunakan perintah pm2 stop <id> untuk menghentikan proses, atau pm2 restart <id> untuk memulai ulang proses.
-- PM2 akan secara otomatis memulai aplikasi setelah restart atau kegagalan, sehingga aplikasi akan berjalan terus-menerus.
-- Jika Anda ingin memastikan PM2 tetap berjalan di background, Anda dapat menggunakan perintah pm2 startup untuk memulai PM2 sebagai layanan sistem, sehingga PM2 akan memulai otomatis setelah reboot.
-
-dapat membaca dokumentasi PM2 di https://pm2.keymetrics.io/.

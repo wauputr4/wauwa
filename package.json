@@ -1,25 +1,28 @@
 {
-  "name": "whatsapp-api",
-  "version": "1.0.0",
-  "description": "Whatsapp api by Ngekoding",
-  "main": "app.js",
+  "name": "wauwa-whatsapp-api",
+  "version": "1.1.0",
+  "description": "WauWA API by Wauputra",
+  "main": "app-multiple-account.js",
   "scripts": {
-    "start": "node app.js",
-    "start:dev": "nodemon app.js",
+    "start": "node app-multiple-account.js",
+    "start:dev": "nodemon app-multiple-account.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "whatsapp-api",
-    "node.js"
+    "wauwa-whatsapp-api",
+    "node.js",
+    "WauWA"
   ],
-  "author": "Nur Muhammad",
+  "author": "Wauputra",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.20.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.0",
     "express-validator": "^6.9.2",
+    "fluent-ffmpeg": "^2.1.2",
     "http": "0.0.1-security",
+    "iconv-lite": "^0.6.3",
     "mime-types": "^2.1.32",
     "qrcode": "^1.4.4",
     "socket.io": "2.3.0",
