@@ -13,21 +13,19 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+const { findAndCheckClient } = require('./helpers/utils');
+
+// Author @wauputra
+// email : wauputr4@gmail.com
+
 app.use(express.json());
 app.use(express.urlencoded({
   extended: true
 }));
 
-
 app.use(fileUpload({
   debug: false
 }));
-
-app.get('/', (req, res) => {
-  res.sendFile('index-multiple-account.html', {
-    root: __dirname
-  });
-});
 
 const sessions = [];
 const SESSIONS_FILE = './whatsapp-sessions.json';
@@ -90,6 +88,7 @@ const createSession = function(id, description) {
   });
 
   client.on('ready', () => {
+    console.log('ID : '+id+' is ready');
     io.emit('ready', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is ready!' });
 
@@ -100,15 +99,18 @@ const createSession = function(id, description) {
   });
 
   client.on('authenticated', () => {
+    console.log('ID : '+id+' is authenticated');
     io.emit('authenticated', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
   });
 
   client.on('auth_failure', function() {
+    console.log('ID : '+id+' is auth failure');
     io.emit('message', { id: id, text: 'Auth failure, restarting...' });
   });
 
   client.on('disconnected', (reason) => {
+    console.log('ID : '+id+' is disconnected');
     io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
     client.destroy();
     client.initialize();
@@ -149,7 +151,7 @@ const init = function(socket) {
   if (savedSessions.length > 0) {
     if (socket) {
       savedSessions.forEach((e, i, arr) => {
-        arr[i].ready = false;
+        // arr[i].ready = false;
       });
 
       socket.emit('init', savedSessions);
@@ -173,57 +175,17 @@ io.on('connection', function(socket) {
   });
 });
 
-// Send message
-app.post('/api/send-message', async (req, res) => {
-  //console.log(req);
-
-  const key = req.body.key;
-  const phone_no = phoneNumberFormatter(req.body.phone_no);
-  const message = req.body.message;
-
-  // const client = sessions.find(sess => sess.id == key)?.client;
-  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
-
-  // Make sure the key is exists & ready
-  if (!client) {
-    return res.status(422).json({
-      status: false,
-      message: `The key: ${key} is not found!`
-    })
-  }
-
-  const isRegisteredNumber = await client.isRegisteredUser(phone_no);
-
-  if (!isRegisteredNumber) {
-    return res.status(422).json({
-      status: false,
-      message: 'The phone_no is not registered'
-    });
-  }
-
-  client.sendMessage(phone_no, message)
-  .then(response => {
-    res.status(200).json({
-      status: true,
-      response: response
-    });
-  }).catch(err => {
-    res.status(500).json({
-      status: false,
-      response: err
-    });
-  }).finally(() => {
-    io.emit('message', { id: key, text: 'success send message : <br>'+message });
-    console.log('/api/send-message key : '+key+' phone_no: '+phone_no+' message: '+message);
+//Endpoint Login QR & get Status
+app.get('/', (req, res) => {
+  res.sendFile('index-multiple-account.html', {
+    root: __dirname
   });
-
 });
 
-//get chats
+//Endpoint get chats
 app.get('/api/chats', async (req, res) => {
   //get Params
   const { key } = req.query;
-
   console.log('key '+key);
 
   //get client session
@@ -237,39 +199,14 @@ app.get('/api/chats', async (req, res) => {
     })
   }
 
-  // client.getChats()
-  // .then(response => {
-  //   const chats = response.map(chat => {
-  //     return {
-  //       id: chat.id.user,
-  //       name: chat.name,
-  //       isGroup: chat.isGroup
-  //     };
-  //   });
-
-  //   res.status(200).json({
-  //     status: true,
-  //     response: chats
-  //   });
-  // })
-  // .catch(err => {
-  //   res.status(500).json({
-  //     status: false,
-  //     response: err
-  //   });
-  // })
-  // .finally(() => {
-  //   io.emit('message', { id: key, text: 'success get fetchMessages ' });
-  //   console.log('/api/chats key : '+key);
-  // });
-
-  client.getChats({ limit: 5 })
+  client.getChats()
   .then(response => {
     const chats = response.map(chat => {
       return {
         id: chat.id.user,
         name: chat.name,
-        isGroup: chat.isGroup
+        isGroup: chat.isGroup,
+        id_serialized: chat.id._serialized
       };
     });
 
@@ -285,19 +222,15 @@ app.get('/api/chats', async (req, res) => {
     });
   })
   .finally(() => {
-    io.emit('message', { id: key, text: 'success get fetchMessages ' });
+    io.emit('message', { id: key, text: 'success get getChats ' });
     console.log('/api/chats key : '+key);
   });
-
-
-
 });
 
-//get labels list
+//Endpoint get labels list
 app.get('/api/labels', async (req, res) => {
   //get Params
   const { key } = req.query;
-
   console.log('key '+key);
 
   //get client session
@@ -323,11 +256,17 @@ app.get('/api/labels', async (req, res) => {
       response: err
     });
   }).finally(() => {
-    io.emit('message', { id: key, text: 'success get fetchMessages ' });
-    console.log('/api/group-list key : '+key);
+    io.emit('message', { id: key, text: 'success get labels ' });
+    console.log('/api/labels key : '+key);
   });
   
 });
+
+const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io,sessions);
+app.use('/api', woowaImpersonateRouter);
+
+const getContactsRouter = require('./routes/getContacts')(io,sessions);
+app.use('/api', getContactsRouter);
 
 server.listen(port, function() {
   console.log('App running on *: ' + port);

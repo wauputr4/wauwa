@@ -93,7 +93,7 @@
 				<ul class="logs"></ul>
 			</div>
 		</div>
-		<p class="mt-4">WauWA (WhatsAPP API) By Wauputra <small>Fork from Ngekoding</small> </p>
+		<p class="mt-4">WauWA (WhatsAPP API) By Wauputra</p>
 	</div>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -128,6 +128,7 @@
 				console.log(data);
 				for (var i = 0; i < data.length; i++) {
 					var session = data[i];
+					console.log(session);
 
 					var clientId = session.id;
 					var clientDescription = session.description;
@@ -143,9 +144,9 @@
 					console.log('on init');
 
 					if (session.ready) {
-						$(`.client.${clientClass} .logs`).prepend($('<li>').text('Whatsapp is ready!'));
+						$(`.client.${clientClass} .logs`).prepend($('<li>').text('WauWA is ready!'));
 					} else {
-						$(`.client.${clientClass} .logs`).prepend($('<li>').text('Connecting sek...'));
+						$(`.client.${clientClass} .logs`).prepend($('<li>').text('Connecting ...'));
 					}
 				}
 			});

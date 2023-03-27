@@ -27,7 +27,19 @@ Menjalankan diserver perlu package PM2, Untuk menggunakan process manager sepert
 dapat membaca dokumentasi PM2 di https://pm2.keymetrics.io/.
 
 ## Endpoint Documentation : 
-https://documenter.getpostman.com/view/19882731/2s93RNyagj
+### POST send message (woowa eco)
+https://wauputr4-urban-space-carnival-q55r9g7vqppf6w6-8000.preview.app.github.dev/api/send_message
+PARAMS
+number      :   +6289635219325
+message     :   tes kirim pesan waaaaa
+
+Body - formdata
+key         :   wau2
+phone_no    :   +6285157978344
+message     :   tes wauwa api from wau2
+
+#### more documentation here :
+https://documenter.getpostman.com/view/20620862/2s93RNyuiE
 
 
 # Whatsapp API Tutorial
