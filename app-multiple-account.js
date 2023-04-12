@@ -124,45 +124,45 @@ const createSession = function (id, description) {
     io.emit('remove-session', id);
   });
 
-  const axios = require('axios');
-  const openaiApiKey = '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'; // ganti dengan kunci API Anda
-  const openaiApiUrl = 'https://api.openai.com/v1/';
+  // const axios = require('axios');
+  // const openaiApiKey = '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'; // ganti dengan kunci API Anda
+  // const openaiApiUrl = 'https://api.openai.com/v1/';
 
-  function generateResponse(prompt) {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openaiApiKey}`,
-    };
+  // function generateResponse(prompt) {
+  //   const headers = {
+  //     'Content-Type': 'application/json',
+  //     'Authorization': `Bearer ${openaiApiKey}`,
+  //   };
 
-    const data = {
-      "model": "gpt-3.5-turbo",
-      "messages": [{ "role": "user", "content": prompt }]
-    };
+  //   const data = {
+  //     "model": "gpt-3.5-turbo",
+  //     "messages": [{ "role": "user", "content": prompt }]
+  //   };
 
-    return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
-      .then(response => {
-        const answer = response.data.choices[0].text.trim();
-        return answer;
-      })
-      .catch(error => {
-        console.log(error);
-        return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : ' + error;
-      });
-  }
+  //   return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
+  //     .then(response => {
+  //       const answer = response.data.choices[0].text.trim();
+  //       return answer;
+  //     })
+  //     .catch(error => {
+  //       console.log(error);
+  //       return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : ' + error;
+  //     });
+  // }
 
-  client.on('message', msg => {
-    if (msg.body == '!gpt') {
-      const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
-      generateResponse(prompt)
-        .then(response => {
-          msg.reply(response);
-        })
-        .catch(error => {
-          console.log(error);
-          msg.reply('ada error : ' + error);
-        });
-    }
-  });
+  // client.on('message', msg => {
+  //   if (msg.body == '!gpt') {
+  //     const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
+  //     generateResponse(prompt)
+  //       .then(response => {
+  //         msg.reply(response);
+  //       })
+  //       .catch(error => {
+  //         console.log(error);
+  //         msg.reply('ada error : ' + error);
+  //       });
+  //   }
+  // });
 
   // Tambahkan client ke sessions
   sessions.push({
@@ -246,7 +246,8 @@ app.get('/api/chats', async (req, res) => {
           id: chat.id.user,
           name: chat.name,
           isGroup: chat.isGroup,
-          id_serialized: chat.id._serialized
+          id_serialized: chat.id._serialized,
+          detail: chat
         };
       });
 
@@ -308,6 +309,38 @@ app.use('/api', woowaImpersonateRouter);
 const getContactsRouter = require('./routes/getContacts')(io, sessions);
 app.use('/api', getContactsRouter);
 
+app.post("/api/get_group", async (req, res) => {
+  // Ambil parameter
+  const key = req.body.key;
+  const groupId = req.body.groupId;
+
+  try {
+    // Cari dan periksa client session
+    const client = findAndCheckClient(key, sessions);
+
+    // Find the group by ID
+    const group = await client.getInviteInfo(groupId);
+
+    if (!group) {
+      res.status(500).json({
+        status: false,
+        message: `No group found with id: ${groupId}`,
+      });
+    } else {
+      // socketAndLog(key, io, "get_group", "Success");
+      res.status(200).json({
+        status: true,
+        response: group,
+      });
+    }
+  } catch (err) {
+    res.status(422).json({
+      status: false,
+      message: err.message,
+    });
+    // socketAndLog(key, io, "check_number", "Failed");
+  }
+});
 
 
 server.listen(port, function () {
