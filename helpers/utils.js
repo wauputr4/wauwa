@@ -1,3 +1,4 @@
+//Check Client Session
 function findAndCheckClient(key, sessions) {
   // Cari client session yang sesuai dengan key
   const session = sessions.find((sess) => sess.id === key);
@@ -10,13 +11,13 @@ function findAndCheckClient(key, sessions) {
   return session.client;
 }
 
-function findGroupByName(name, client) {
-  // const groupName = async function(name,client) {
-  const group = client.getChats().then((chats) => {
-    return chats.find(
-      (chat) => chat.isGroup && chat.name.toLowerCase() == name.toLowerCase()
-    );
-  });
+
+//Cari Group Berdasarkan Nama
+async function findGroupByNameAsync(name, client) {
+  const chats = await client.getChats();
+  const group = chats.find(
+    (chat) => chat.isGroup && chat.name.toLowerCase() == name.toLowerCase()
+  );
 
   if (!group) {
     throw new Error(`No group found with name: ${name}`);
@@ -25,6 +26,21 @@ function findGroupByName(name, client) {
   return group;
 }
 
+
+//Cari Group Berdasarkan Slug Invited Code
+async function findGroupBySlugInvite(slug, client) {
+  const group = await client.getInviteInfo(slug);
+
+  if (group.membershipApprovalMode == true) {
+    throw new Error(`You are not joined with group ${group.subject}`);
+  }
+
+  return group;
+}
+
+
+
+//Log Enpoint & IO
 function socketAndLog(key, io, slug, status, other = null) {
   let message = {
     id: key,
@@ -38,11 +54,12 @@ function socketAndLog(key, io, slug, status, other = null) {
     }
   }
   io.emit("message", message);
-  console.log(status + " api/" + slug + " | key : " + key);
+  console.log(new Date().toLocaleString() + " | " + status + " api/" + slug + " | key : " + key);
 }
 
 module.exports = {
   findAndCheckClient: findAndCheckClient,
-  findGroupByName: findGroupByName,
+  findGroupByNameAsync: findGroupByNameAsync,
   socketAndLog: socketAndLog,
+  findGroupBySlugInvite: findGroupBySlugInvite
 };

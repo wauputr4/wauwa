@@ -3,8 +3,9 @@ module.exports = (io, sessions) => {
   const router = express.Router();
   const {
     findAndCheckClient,
-    findGroupByName,
+    findGroupByNameAsync,
     socketAndLog,
+    findGroupBySlugInvite,
   } = require("../helpers/utils");
   const { phoneNumberFormatter } = require("../helpers/formatter");
   const { body, validationResult } = require("express-validator");
@@ -14,7 +15,6 @@ module.exports = (io, sessions) => {
     // Ambil parameter
     const phone_no = phoneNumberFormatter(req.body.phone_no);
     const key = req.body.key;
-    console.log("key " + key);
 
     try {
       // Cari dan periksa client session
@@ -43,12 +43,12 @@ module.exports = (io, sessions) => {
     }
   });
 
+
   //Endpoint Send message Woowa
   router.post("/send_message", async (req, res) => {
     const key = req.body.key;
     const phone_no = phoneNumberFormatter(req.body.phone_no);
     const message = req.body.message;
-
 
     try {
       const client = findAndCheckClient(key, sessions);
@@ -83,88 +83,108 @@ module.exports = (io, sessions) => {
           }));
         });
     } catch (err) {
-      res.status(422).json({
-        status: false,
-        message: err.message,
-      });
-
       socketAndLog(key, io, "send_message", "Error", JSON.stringify({
         phone_no: phone_no,
         message: message
       }));
+
+      res.status(422).json({
+        status: false,
+        message: err.message,
+      });
     }
   });
 
-  // Send message to group
+
+  // Endpoint Send Group
+  // Send message asyncronuze to group 
   // You can use chatID or group name, yea!
-  router.post(
-    "/async_send_group",
-    [
-      body("id").custom((value, { req }) => {
-        if (!value && !req.body.group_name) {
-          throw new Error("Invalid value, you can use `id` or `group_name`");
-        }
-        return true;
-      }),
-      body("message").notEmpty(),
-    ],
-    async (req, res) => {
-      const errors = validationResult(req).formatWith(({ msg }) => {
-        return msg;
+  router.post("/async_send_group", async (req, res) => {
+    let chatId = req.body.id;
+    const key = req.body.key;
+    const message = req.body.message;
+    const group_name = req.body.group_name;
+
+    try {
+      const client = findAndCheckClient(key, sessions);
+      if (!chatId) {
+        const group = await findGroupByNameAsync(group_name, client);
+        chatId = group?.id?._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
+      }
+      const response = await client.sendMessage(chatId, message);
+
+      socketAndLog(key, io, "async_send_group", "Success", JSON.stringify({
+        group_name: group_name,
+        message: message
+      }));
+
+      res.status(200).json({
+        status: true,
+        response: response,
       });
+    } catch (err) {
+      socketAndLog(key, io, "async_send_group", "Error", JSON.stringify({
+        group_name: group_name,
+        message: message
+      }));
 
-      if (!errors.isEmpty()) {
-        return res.status(422).json({
-          status: false,
-          message: errors.mapped(),
-        });
-      }
-
-      let chatId = req.body.id;
-      const key = req.body.key;
-      const group_name = req.body.group_name;
-      const message = req.body.message;
-
-      try {
-        const client = findAndCheckClient(key, sessions);
-
-        // Find the group by name
-        if (!chatId) {
-          const group = await findGroupByName(group_name, client);
-          if (group) {
-            chatId = group.id._serialized;
-          }
-        }
-
-        client
-          .sendMessage(chatId, message)
-          .then((response) => {
-            res.status(200).json({
-              status: true,
-              response: response,
-            });
-          })
-          .catch((err) => {
-            res.status(500).json({
-              status: false,
-              response: err.message,
-            });
-          });
-      } catch (err) {
-        res.status(422).json({
-          status: false,
-          message: err.message,
-        });
-
-        socketAndLog(key, io, "send_message", "Error", JSON.stringify({
-          group_name: group_name,
-          message: message
-        }));
-      }
-
-
+      res.status(500).json({
+        status: false,
+        response: err.message,
+      });
     }
-  );
+  });
+
+  // Endpoint Send Group with Slug
+  // Send message Syncronize to group with invited code whatsapp
+  router.post("/send_message_group_id", [
+    body("key").notEmpty(),
+    body("message").notEmpty(),
+    body("group_id").notEmpty(),
+  ], async (req, res) => {
+
+    const errors = validationResult(req).formatWith(({ msg }) => {
+      return msg;
+    });
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({
+        status: false,
+        message: errors.mapped(),
+      });
+    }
+    const key = req.body.key;
+    const message = req.body.message;
+    const group_id = req.body.group_id;
+
+    try {
+      const client = findAndCheckClient(key, sessions);
+
+      const group = await findGroupBySlugInvite(group_id, client);
+      const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })();
+
+      const response = await client.sendMessage(chatId, message);
+      socketAndLog(key, io, "send_message_group_id", "Success", JSON.stringify({
+        group_id: group_id,
+        message: message
+      }));
+
+      res.status(200).json({
+        status: true,
+        response: response,
+      });
+    } catch (err) {
+      socketAndLog(key, io, "send_message_group_id", "Error", JSON.stringify({
+        group_id: group_id,
+        message: message
+      }));
+
+      res.status(500).json({
+        status: false,
+        response: err.message,
+      });
+    }
+  });
 
   return router;
 };
