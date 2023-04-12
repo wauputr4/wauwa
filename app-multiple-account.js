@@ -124,6 +124,46 @@ const createSession = function(id, description) {
     io.emit('remove-session', id);
   });
 
+  const axios = require('axios');
+const openaiApiKey = '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'; // ganti dengan kunci API Anda
+const openaiApiUrl = 'https://api.openai.com/v1/';
+
+function generateResponse(prompt) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${openaiApiKey}`,
+  };
+
+  const data = {
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": prompt}]
+  };
+
+  return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
+    .then(response => {
+      const answer = response.data.choices[0].text.trim();
+      return answer;
+    })
+    .catch(error => {
+      console.log(error);
+      return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : '+error;
+    });
+}
+
+client.on('message', msg => {
+  if (msg.body == '!gpt') {
+    const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
+    generateResponse(prompt)
+      .then(response => {
+        msg.reply(response);
+      })
+      .catch(error => {
+        console.log(error);
+        msg.reply('ada error : '+error);
+      });
+  }
+});
+
   // Tambahkan client ke sessions
   sessions.push({
     id: id,
@@ -183,7 +223,7 @@ app.get('/', (req, res) => {
 });
 
 //Endpoint get chats
-app.get('/api/chats', async (req, res) => {
+  app.get('/api/chats', async (req, res) => {
   //get Params
   const { key } = req.query;
   console.log('key '+key);
@@ -199,7 +239,7 @@ app.get('/api/chats', async (req, res) => {
     })
   }
 
-  client.getChats()
+    client.getChats()
   .then(response => {
     const chats = response.map(chat => {
       return {
@@ -266,7 +306,9 @@ const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io,sessions)
 app.use('/api', woowaImpersonateRouter);
 
 const getContactsRouter = require('./routes/getContacts')(io,sessions);
-app.use('/api', getContactsRouter);
+  app.use('/api', getContactsRouter);
+
+
 
 server.listen(port, function() {
   console.log('App running on *: ' + port);
