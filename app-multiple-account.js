@@ -7,7 +7,7 @@ const fs = require('fs');
 const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
-const port = process.env.PORT || 8001;
+const port = process.env.PORT || 8002;
 
 const app = express();
 const server = http.createServer(app);
@@ -30,12 +30,12 @@ app.use(fileUpload({
 const sessions = [];
 const SESSIONS_FILE = './whatsapp-sessions.json';
 
-const createSessionsFileIfNotExists = function() {
+const createSessionsFileIfNotExists = function () {
   if (!fs.existsSync(SESSIONS_FILE)) {
     try {
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify([]));
       console.log('Sessions file created successfully.');
-    } catch(err) {
+    } catch (err) {
       console.log('Failed to create sessions file: ', err);
     }
   }
@@ -43,19 +43,19 @@ const createSessionsFileIfNotExists = function() {
 
 createSessionsFileIfNotExists();
 
-const setSessionsFile = function(sessions) {
-  fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
+const setSessionsFile = function (sessions) {
+  fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function (err) {
     if (err) {
       console.log(err);
     }
   });
 }
 
-const getSessionsFile = function() {
+const getSessionsFile = function () {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-const createSession = function(id, description) {
+const createSession = function (id, description) {
   console.log('Creating session: ' + id);
   const client = new Client({
     restartOnAuthFail: true,
@@ -88,7 +88,7 @@ const createSession = function(id, description) {
   });
 
   client.on('ready', () => {
-    console.log('ID : '+id+' is ready');
+    console.log('ID : ' + id + ' is ready');
     io.emit('ready', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is ready!' });
 
@@ -99,18 +99,18 @@ const createSession = function(id, description) {
   });
 
   client.on('authenticated', () => {
-    console.log('ID : '+id+' is authenticated');
+    console.log('ID : ' + id + ' is authenticated');
     io.emit('authenticated', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
   });
 
-  client.on('auth_failure', function() {
-    console.log('ID : '+id+' is auth failure');
+  client.on('auth_failure', function () {
+    console.log('ID : ' + id + ' is auth failure');
     io.emit('message', { id: id, text: 'Auth failure, restarting...' });
   });
 
   client.on('disconnected', (reason) => {
-    console.log('ID : '+id+' is disconnected');
+    console.log('ID : ' + id + ' is disconnected');
     io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
     client.destroy();
     client.initialize();
@@ -125,44 +125,44 @@ const createSession = function(id, description) {
   });
 
   const axios = require('axios');
-const openaiApiKey = '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'; // ganti dengan kunci API Anda
-const openaiApiUrl = 'https://api.openai.com/v1/';
+  const openaiApiKey = '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'; // ganti dengan kunci API Anda
+  const openaiApiUrl = 'https://api.openai.com/v1/';
 
-function generateResponse(prompt) {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${openaiApiKey}`,
-  };
+  function generateResponse(prompt) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`,
+    };
 
-  const data = {
-    "model": "gpt-3.5-turbo",
-    "messages": [{"role": "user", "content": prompt}]
-  };
+    const data = {
+      "model": "gpt-3.5-turbo",
+      "messages": [{ "role": "user", "content": prompt }]
+    };
 
-  return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
-    .then(response => {
-      const answer = response.data.choices[0].text.trim();
-      return answer;
-    })
-    .catch(error => {
-      console.log(error);
-      return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : '+error;
-    });
-}
-
-client.on('message', msg => {
-  if (msg.body == '!gpt') {
-    const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
-    generateResponse(prompt)
+    return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
       .then(response => {
-        msg.reply(response);
+        const answer = response.data.choices[0].text.trim();
+        return answer;
       })
       .catch(error => {
         console.log(error);
-        msg.reply('ada error : '+error);
+        return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : ' + error;
       });
   }
-});
+
+  client.on('message', msg => {
+    if (msg.body == '!gpt') {
+      const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
+      generateResponse(prompt)
+        .then(response => {
+          msg.reply(response);
+        })
+        .catch(error => {
+          console.log(error);
+          msg.reply('ada error : ' + error);
+        });
+    }
+  });
 
   // Tambahkan client ke sessions
   sessions.push({
@@ -185,7 +185,7 @@ client.on('message', msg => {
   }
 }
 
-const init = function(socket) {
+const init = function (socket) {
   const savedSessions = getSessionsFile();
 
   if (savedSessions.length > 0) {
@@ -206,10 +206,10 @@ const init = function(socket) {
 init();
 
 // Socket IO
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
   init(socket);
 
-  socket.on('create-session', function(data) {
+  socket.on('create-session', function (data) {
     console.log('Create session: ' + data.id);
     createSession(data.id, data.description);
   });
@@ -223,10 +223,10 @@ app.get('/', (req, res) => {
 });
 
 //Endpoint get chats
-  app.get('/api/chats', async (req, res) => {
+app.get('/api/chats', async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log('key '+key);
+  console.log('key ' + key);
 
   //get client session
   const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
@@ -239,39 +239,39 @@ app.get('/', (req, res) => {
     })
   }
 
-    client.getChats()
-  .then(response => {
-    const chats = response.map(chat => {
-      return {
-        id: chat.id.user,
-        name: chat.name,
-        isGroup: chat.isGroup,
-        id_serialized: chat.id._serialized
-      };
-    });
+  client.getChats()
+    .then(response => {
+      const chats = response.map(chat => {
+        return {
+          id: chat.id.user,
+          name: chat.name,
+          isGroup: chat.isGroup,
+          id_serialized: chat.id._serialized
+        };
+      });
 
-    res.status(200).json({
-      status: true,
-      response: chats
+      res.status(200).json({
+        status: true,
+        response: chats
+      });
+    })
+    .catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err
+      });
+    })
+    .finally(() => {
+      io.emit('message', { id: key, text: 'success get getChats ' });
+      console.log('/api/chats key : ' + key);
     });
-  })
-  .catch(err => {
-    res.status(500).json({
-      status: false,
-      response: err
-    });
-  })
-  .finally(() => {
-    io.emit('message', { id: key, text: 'success get getChats ' });
-    console.log('/api/chats key : '+key);
-  });
 });
 
 //Endpoint get labels list
 app.get('/api/labels', async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log('key '+key);
+  console.log('key ' + key);
 
   //get client session
   const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
@@ -285,31 +285,31 @@ app.get('/api/labels', async (req, res) => {
   }
 
   client.getLabels()
-  .then(response => {
-    res.status(200).json({
-      status: true,
-      response: response
+    .then(response => {
+      res.status(200).json({
+        status: true,
+        response: response
+      });
+    }).catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err
+      });
+    }).finally(() => {
+      io.emit('message', { id: key, text: 'success get labels ' });
+      console.log('/api/labels key : ' + key);
     });
-  }).catch(err => {
-    res.status(500).json({
-      status: false,
-      response: err
-    });
-  }).finally(() => {
-    io.emit('message', { id: key, text: 'success get labels ' });
-    console.log('/api/labels key : '+key);
-  });
-  
+
 });
 
-const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io,sessions);
+const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io, sessions);
 app.use('/api', woowaImpersonateRouter);
 
-const getContactsRouter = require('./routes/getContacts')(io,sessions);
-  app.use('/api', getContactsRouter);
+const getContactsRouter = require('./routes/getContacts')(io, sessions);
+app.use('/api', getContactsRouter);
 
 
 
-server.listen(port, function() {
+server.listen(port, function () {
   console.log('App running on *: ' + port);
 });
