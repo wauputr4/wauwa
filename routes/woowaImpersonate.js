@@ -109,7 +109,8 @@ module.exports = (io, sessions) => {
       const client = findAndCheckClient(key, sessions);
       if (!chatId) {
         const group = await findGroupByNameAsync(group_name, client);
-        chatId = group?.id?._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
+        // chatId = group?.id?._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })(); //old
+        chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
       }
       const response = await client.sendMessage(chatId, message);
 
@@ -161,7 +162,9 @@ module.exports = (io, sessions) => {
       const client = findAndCheckClient(key, sessions);
 
       const group = await findGroupBySlugInvite(group_id, client);
-      const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })();
+      // const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })(); //old
+      const chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
+
 
       const response = await client.sendMessage(chatId, message);
       socketAndLog(key, io, "send_message_group_id", "Success", JSON.stringify({
