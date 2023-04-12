@@ -17,19 +17,28 @@ function findGroupByName(name, client) {
       (chat) => chat.isGroup && chat.name.toLowerCase() == name.toLowerCase()
     );
   });
-  return group;
-  // }
 
-  // return groupName;
+  if (!group) {
+    throw new Error(`No group found with name: ${name}`);
+  }
+
+  return group;
 }
 
-function socketAndLog(key, io, slug, status) {
-  //Io Socket & log
-  io.emit("message", {
+function socketAndLog(key, io, slug, status, other = null) {
+  let message = {
     id: key,
-    text: status + " mendapatkan daftar " + slug,
-  });
-  console.log("api/" + slug + " | key : " + key);
+    text: status + " hit endpoint " + slug,
+  };
+  if (other) {
+    try {
+      message.data = JSON.parse(other);
+    } catch (e) {
+      console.error("parsing JSON: ", e);
+    }
+  }
+  io.emit("message", message);
+  console.log(status + " api/" + slug + " | key : " + key);
 }
 
 module.exports = {
