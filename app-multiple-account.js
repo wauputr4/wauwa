@@ -7,13 +7,18 @@ const fs = require('fs');
 const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
-const port = process.env.PORT || 8002;
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+const SessionController = require('./controllers/SessionController.js');
+
 const { findAndCheckClient } = require('./helpers/utils');
+const appConfig = require('./config/app.js');
+const port = `${appConfig.port}` || 8002;
+
+const LogSendController = require('./controllers/LogSendController.js');
 
 // Author @wauputra
 // email : wauputr4@gmail.com
@@ -92,10 +97,26 @@ const createSession = function (id, description) {
     io.emit('ready', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is ready!' });
 
+    //menyimpan sesi
     const savedSessions = getSessionsFile();
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
     savedSessions[sessionIndex].ready = true;
     setSessionsFile(savedSessions);
+
+    //createorupdate db session
+
+    const clientInfo = client.info;
+    const sessionData = {
+      keyName: savedSessions[sessionIndex].id,
+      description: savedSessions[sessionIndex].description,
+      ready: true,
+      number: clientInfo.me.user,
+      platform: clientInfo.platform,
+      pushname: clientInfo.pushname,
+      serialize_id: clientInfo.me._serialized,
+    };
+
+    SessionController.createOrUpdateSession(sessionData);
   });
 
   client.on('authenticated', () => {
@@ -183,6 +204,7 @@ const createSession = function (id, description) {
     });
     setSessionsFile(savedSessions);
   }
+
 }
 
 const init = function (socket) {
