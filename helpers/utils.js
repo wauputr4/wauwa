@@ -39,20 +39,30 @@ async function findGroupBySlugInvite(slug, client) {
 }
 
 
-
 //Log Enpoint & IO
-function socketAndLog(key, io, slug, status, other = null) {
+async function socketAndLog(io, key, slug, status, data = null) {
+  //get session id from sessionController
+  if (data) {
+    console.log('execute data');
+    if (data.method_type == 'send') {
+      const LogSendController = require("../controllers/LogSendController");
+      LogSendController.createLogSend({
+        keyName: key,
+        method: 'api/' + slug,
+        status: status,
+
+        to: data.to,
+        message: data.message,
+        response: JSON.stringify(data.response), // Convert response to string
+        is_group: data.is_group,
+      });
+    }
+  }
+
   let message = {
     id: key,
     text: status + " hit endpoint " + slug,
   };
-  if (other) {
-    try {
-      message.data = JSON.parse(other);
-    } catch (e) {
-      console.error("parsing JSON: ", e);
-    }
-  }
   io.emit("message", message);
   console.log(new Date().toLocaleString() + " | " + status + " api/" + slug + " | key : " + key);
 }

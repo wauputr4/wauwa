@@ -20,7 +20,7 @@ module.exports = (io, sessions) => {
       // Cari dan periksa client session
       const client = findAndCheckClient(key, sessions);
       const isRegisteredNumber = await client.isRegisteredUser(phone_no);
-      socketAndLog(key, io, "check_number", "Success");
+      (key, "check_number", "Success");
 
       if (!isRegisteredNumber) {
         return res
@@ -39,7 +39,7 @@ module.exports = (io, sessions) => {
         message: err.message,
       });
 
-      socketAndLog(key, io, "check_number", "Failed");
+      socketAndLog(io, key, "check_number", "Failed",);
     }
   });
 
@@ -62,31 +62,53 @@ module.exports = (io, sessions) => {
         });
       }
 
-      client
-        .sendMessage(phone_no, message)
-        .then((response) => {
-          res.status(200).json({
-            status: true,
-            response: response,
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({
-            status: false,
-            response: err.message,
-          });
-        })
-        .finally(() => {
-          socketAndLog(key, io, "send_message", "Success", JSON.stringify({
-            phone_no: phone_no,
-            message: message
-          }));
-        });
+      const response = await client.sendMessage(phone_no, message);
+      socketAndLog(io, key, "send_message", "Success", {
+        method_type: "send",
+        to: phone_no,
+        message: message,
+        response: response,
+        is_group: 0,
+      });
+
+      res.status(200).json({
+        status: true,
+        response: response,
+      });
+
+      // client
+      //   .sendMessage(phone_no, message)
+      //   .then((response) => {
+      //     res.status(200).json({
+      //       status: true,
+      //       response: response,
+      //     });
+      //   })
+      //   .catch((err) => {
+      //     res.status(500).json({
+      //       status: false,
+      //       response: err.message,
+      //     });
+      //   })
+      //   .finally((response) => {
+      //     socketAndLog(io, key, "send_message", "Success", {
+      //       method_type: "send",
+      //       to: phone_no,
+      //       message: message,
+      //       response: response,
+      //       is_group: 0,
+      //     });
+      //   });
+
+
     } catch (err) {
-      socketAndLog(key, io, "send_message", "Error", JSON.stringify({
-        phone_no: phone_no,
-        message: message
-      }));
+      socketAndLog(io, key, "send_message", "Failed", {
+        method_type: "send",
+        to: phone_no,
+        message: message,
+        response: err,
+        is_group: 0,
+      });
 
       res.status(422).json({
         status: false,
@@ -114,20 +136,26 @@ module.exports = (io, sessions) => {
       }
       const response = await client.sendMessage(chatId, message);
 
-      socketAndLog(key, io, "async_send_group", "Success", JSON.stringify({
-        group_name: group_name,
-        message: message
-      }));
+      socketAndLog(io, key, "async_send_group", "Success", {
+        method_type: "send",
+        to: group_name,
+        message: message,
+        response: response,
+        is_group: 1,
+      });
 
       res.status(200).json({
         status: true,
         response: response,
       });
     } catch (err) {
-      socketAndLog(key, io, "async_send_group", "Error", JSON.stringify({
-        group_name: group_name,
-        message: message
-      }));
+      socketAndLog(io, key, "async_send_group", "Failed", {
+        method_type: "send",
+        to: group_name,
+        message: message,
+        response: err,
+        is_group: 1,
+      });
 
       res.status(500).json({
         status: false,
@@ -165,22 +193,27 @@ module.exports = (io, sessions) => {
       // const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })(); //old
       const chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
 
-
       const response = await client.sendMessage(chatId, message);
-      socketAndLog(key, io, "send_message_group_id", "Success", JSON.stringify({
-        group_id: group_id,
-        message: message
-      }));
+      socketAndLog(io, key, "send_message_group_id", "Success", {
+        method_type: "send",
+        to: group_id,
+        message: message,
+        response: response,
+        is_group: 1,
+      });
 
       res.status(200).json({
         status: true,
         response: response,
       });
     } catch (err) {
-      socketAndLog(key, io, "send_message_group_id", "Error", JSON.stringify({
-        group_id: group_id,
-        message: message
-      }));
+      socketAndLog(io, key, "send_message_group_id", "Failed", {
+        method_type: "send",
+        to: group_id,
+        message: message,
+        response: err,
+        is_group: 1,
+      });
 
       res.status(500).json({
         status: false,
