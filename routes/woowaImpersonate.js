@@ -189,7 +189,7 @@ module.exports = (io, sessions) => {
     try {
       const client = findAndCheckClient(key, sessions);
 
-      const group = await findGroupBySlugInvite(group_id, client);
+      const group = await findGroupBySlugInvite(group_id, client, key);
       // const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })(); //old
       const chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
 

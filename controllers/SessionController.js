@@ -43,6 +43,7 @@ async function createOrUpdateSession(sessionData) {
     }
 }
 
+
 async function getSessionId(key_name) {
     try {
         // Find session with matching key_name
@@ -60,5 +61,23 @@ async function getSessionId(key_name) {
     }
 }
 
+//create function get session serialize id
+async function getSessionSerializeId(key_name) {
+    try {
+        // Find session with matching key_name
+        const session = await SessionModel.Session.findOne({
+            where: { key_name: key_name }
+        });
 
-module.exports = { createOrUpdateSession, getSessionId };
+        if (session) {
+            return session.serialize_id;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting session id:', error);
+    }
+}
+
+
+module.exports = { createOrUpdateSession, getSessionId, getSessionSerializeId };
