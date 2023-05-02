@@ -106,7 +106,7 @@ module.exports = (io, sessions) => {
         method_type: "send",
         to: phone_no,
         message: message,
-        response: err,
+        response: err.message,
         is_group: 0,
       });
 
@@ -153,7 +153,7 @@ module.exports = (io, sessions) => {
         method_type: "send",
         to: group_name,
         message: message,
-        response: err,
+        response: err.message,
         is_group: 1,
       });
 
@@ -211,7 +211,7 @@ module.exports = (io, sessions) => {
         method_type: "send",
         to: group_id,
         message: message,
-        response: err,
+        response: err.message,
         is_group: 1,
       });
 
