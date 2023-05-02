@@ -30,13 +30,14 @@ async function findGroupByNameAsync(name, client) {
 //Cari Group Berdasarkan Slug Invited Code
 async function findGroupBySlugInvite(slug, client, key) {
   const group = await client.getInviteInfo(slug);
-  console.log('group :', group);
 
   //get serialize id from session
   const SessionController = require("../controllers/SessionController");
   const serialize_id = await SessionController.getSessionSerializeId(key);
+  console.log('serialize_id :', serialize_id);
 
   const isParticipant = group.participants.some(participant => {
+    console.log('participant.id._serialize_id :', participant.id._serialized);
     return participant.id._serialized === serialize_id;
   });
 
