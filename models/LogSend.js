@@ -24,6 +24,7 @@ sequelize.authenticate()
 class LogSend extends Model { }
 LogSend.init({
     session_id: DataTypes.INTEGER,
+    session_label: DataTypes.STRING,
     to: DataTypes.STRING,
     message: DataTypes.TEXT,
     method: DataTypes.STRING,

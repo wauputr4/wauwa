@@ -21,7 +21,8 @@ async function createLogSend(data) {
             if (session) {
                 var sessionId = session.id;
             } else {
-                return console.error('Session id is invalid');
+                var sessionId = null;
+                // return console.error('Session id is invalid');
             }
         } catch (error) {
             return console.error('Error getting session id:', error);
@@ -30,6 +31,7 @@ async function createLogSend(data) {
         // Create a new LogSend instance with the given properties
         const logSend = await LogSendModel.LogSend.create({
             session_id: sessionId,
+            session_label: keyName,
             to: to,
             message: message,
             method: method,
