@@ -28,10 +28,18 @@ async function findGroupByNameAsync(name, client) {
 
 
 //Cari Group Berdasarkan Slug Invited Code
-async function findGroupBySlugInvite(slug, client) {
+async function findGroupBySlugInvite(slug, client, key) {
   const group = await client.getInviteInfo(slug);
 
-  if (group.membershipApprovalMode == true) {
+  //get serialize id from session
+  const SessionController = require("../controllers/SessionController");
+  const serialize_id = await SessionController.getSessionSerializeId(key);
+
+  const isParticipant = group.participants.some(participant => {
+    return participant.id._serialized === serialize_id;
+  });
+
+  if (!isParticipant) {
     throw new Error(`You are not joined with group ${group.subject}`);
   }
 
