@@ -1,6 +1,6 @@
 {
   "name": "wauwa-whatsapp-api",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "WauWA API by Wauputra",
   "main": "app-multiple-account.js",
   "scripts": {
@@ -19,6 +19,7 @@
     "axios": "^0.20.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.3",
+    "ejs": "^3.1.9",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.0",
     "express-validator": "^6.9.2",

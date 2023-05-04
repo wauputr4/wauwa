@@ -14,11 +14,13 @@ const io = socketIO(server);
 
 const SessionController = require('./controllers/SessionController.js');
 
-const { findAndCheckClient } = require('./helpers/utils');
+const { findAndCheckClient, getLogTime } = require('./helpers/utils');
 const appConfig = require('./config/app.js');
 const port = `${appConfig.port}` || 8002;
 
 const LogSendController = require('./controllers/LogSendController.js');
+
+const ejs = require('ejs');
 
 // Author @wauputra
 // email : wauputr4@gmail.com
@@ -39,9 +41,9 @@ const createSessionsFileIfNotExists = function () {
   if (!fs.existsSync(SESSIONS_FILE)) {
     try {
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify([]));
-      console.log('Sessions file created successfully.');
+      console.log(getLogTime() + 'Sessions file created successfully.');
     } catch (err) {
-      console.log('Failed to create sessions file: ', err);
+      console.log(getLogTime() + 'Failed to create sessions file: ', err);
     }
   }
 }
@@ -51,7 +53,7 @@ createSessionsFileIfNotExists();
 const setSessionsFile = function (sessions) {
   fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function (err) {
     if (err) {
-      console.log(err);
+      console.log(getLogTime() + err);
     }
   });
 }
@@ -61,7 +63,7 @@ const getSessionsFile = function () {
 }
 
 const createSession = function (id, description) {
-  console.log('Creating session: ' + id);
+  console.log(getLogTime() + 'Creating session: ' + id);
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
@@ -85,17 +87,17 @@ const createSession = function (id, description) {
   client.initialize();
 
   client.on('qr', (qr) => {
-    console.log('QR RECEIVED', qr);
+    console.log(getLogTime() + 'QR Received', qr);
     qrcode.toDataURL(qr, (err, url) => {
       io.emit('qr', { id: id, src: url });
-      io.emit('message', { id: id, text: 'QR Code received, scan please!' });
+      io.emit('message', { id: id, text: getLogTime() + 'QR Code received, scan please!' });
     });
   });
 
   client.on('ready', () => {
-    console.log('ID : ' + id + ' is ready');
+    console.log(getLogTime() + 'ID : ' + id + ' is ready');
     io.emit('ready', { id: id });
-    io.emit('message', { id: id, text: 'Whatsapp is ready!' });
+    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is ready!' });
 
     //menyimpan sesi
     const savedSessions = getSessionsFile();
@@ -120,19 +122,19 @@ const createSession = function (id, description) {
   });
 
   client.on('authenticated', () => {
-    console.log('ID : ' + id + ' is authenticated');
+    console.log(getLogTime() + 'ID : ' + id + ' is authenticated');
     io.emit('authenticated', { id: id });
-    io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
+    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is authenticated!' });
   });
 
   client.on('auth_failure', function () {
-    console.log('ID : ' + id + ' is auth failure');
-    io.emit('message', { id: id, text: 'Auth failure, restarting...' });
+    console.log(getLogTime() + 'ID : ' + id + ' is auth failure');
+    io.emit('message', { id: id, text: getLogTime() + 'Auth failure, restarting...' });
   });
 
   client.on('disconnected', (reason) => {
-    console.log('ID : ' + id + ' is disconnected');
-    io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
+    console.log(getLogTime() + 'ID : ' + id + ' is disconnected');
+    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is disconnected!' });
     client.destroy();
     client.initialize();
 
@@ -232,7 +234,7 @@ io.on('connection', function (socket) {
   init(socket);
 
   socket.on('create-session', function (data) {
-    console.log('Create session: ' + data.id);
+    console.log(getLogTime() + 'Create session: ' + data.id);
     createSession(data.id, data.description);
   });
 });
@@ -244,11 +246,50 @@ app.get('/', (req, res) => {
   });
 });
 
+// set the view engine to ejs
+app.set('views', './views');
+app.set('view engine', 'ejs');
+
+app.get('/list', (req, res) => {
+  res.render('session-list');
+});
+
+app.get('/list/:slug', async (req, res) => {
+  const slug = req.params.slug;
+  const savedSessions = getSessionsFile();
+  const sessionIndex = savedSessions.findIndex(sess => sess.id == slug);
+
+  //get Session Detail from db with getSessionId on SessionController
+  const SessionController = require("./controllers/SessionController");
+  const Session = await SessionController.getSessionInfo(slug);
+
+  //jika hasil dari Session tidak ada maka akan 404
+  if (!Session) {
+    return res.status(404).json({
+      status: false,
+      message: getLogTime() + `The key: ${slug} is not found`
+    });
+  }
+
+  const LogSendController = require("./controllers/LogSendController");
+  const LogSend = await LogSendController.getLogSendsByKeyName(slug);
+
+  // console.log('LogSend : ', LogSend);
+
+  res.render('session-detail', {
+    session: savedSessions[sessionIndex],
+    logsend: LogSend,
+    varSession: Session
+  });
+
+});
+
+
 //Endpoint get chats
 app.get('/api/chats', async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log('key ' + key);
+  console.log(getLogTime() + 'key ' + key);
 
   //get client session
   const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
@@ -257,7 +298,7 @@ app.get('/api/chats', async (req, res) => {
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: `The key: ${key} is not found!`
+      message: getLogTime() + `The key: ${key} is not found!`
     })
   }
 
@@ -285,8 +326,8 @@ app.get('/api/chats', async (req, res) => {
       });
     })
     .finally(() => {
-      io.emit('message', { id: key, text: 'success get getChats ' });
-      console.log('/api/chats key : ' + key);
+      io.emit('message', { id: key, text: getLogTime() + 'success get getChats ' });
+      console.log(getLogTime() + '/api/chats key : ' + key);
     });
 });
 
@@ -294,7 +335,7 @@ app.get('/api/chats', async (req, res) => {
 app.get('/api/labels', async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log('key ' + key);
+  console.log(getLogTime() + 'key ' + key);
 
   //get client session
   const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
@@ -303,7 +344,7 @@ app.get('/api/labels', async (req, res) => {
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: `The key: ${key} is not found!`
+      message: getLogTime() + `The key: ${key} is not found!`
     })
   }
 
@@ -319,8 +360,8 @@ app.get('/api/labels', async (req, res) => {
         response: err
       });
     }).finally(() => {
-      io.emit('message', { id: key, text: 'success get labels ' });
-      console.log('/api/labels key : ' + key);
+      io.emit('message', { id: key, text: getLogTime() + 'success get labels ' });
+      console.log(getLogTime() + '/api/labels key : ' + key);
     });
 
 });
@@ -346,7 +387,7 @@ app.post("/api/get_group", async (req, res) => {
     if (!group) {
       res.status(500).json({
         status: false,
-        message: `No group found with id: ${groupId}`,
+        message: getLogTime() + `No group found with id: ${groupId}`,
       });
     } else {
       // socketAndLog(key, io, "get_group", "Success");
@@ -358,7 +399,7 @@ app.post("/api/get_group", async (req, res) => {
   } catch (err) {
     res.status(422).json({
       status: false,
-      message: err.message,
+      message: getLogTime() + err.message,
     });
     // socketAndLog(key, io, "check_number", "Failed");
   }
@@ -366,5 +407,5 @@ app.post("/api/get_group", async (req, res) => {
 
 
 server.listen(port, function () {
-  console.log('App running on *: ' + port);
+  console.log(getLogTime() + 'App running on *: ' + port);
 });

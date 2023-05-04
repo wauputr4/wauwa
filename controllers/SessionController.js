@@ -79,5 +79,23 @@ async function getSessionSerializeId(key_name) {
     }
 }
 
+//create function get session info by key_name
+async function getSessionInfo(key_name) {
+    try {
+        // Find session with matching key_name
+        const session = await SessionModel.Session.findOne({
+            where: { key_name: key_name }
+        });
 
-module.exports = { createOrUpdateSession, getSessionId, getSessionSerializeId };
+        if (session) {
+            return session;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting session id:', error);
+    }
+}
+
+
+module.exports = { createOrUpdateSession, getSessionId, getSessionSerializeId, getSessionInfo };

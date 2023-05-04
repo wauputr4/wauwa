@@ -65,5 +65,26 @@ async function getLogSendsBySession(sessionId) {
     }
 }
 
+async function getLogSendsByKeyName(keyName) {
+    try {
+        // Find all LogSends that belong to the specified session sort by new
+        const logSends = await LogSendModel.LogSend.findAll({
+            where: {
+                session_label: keyName
+            },
+            order: [
+                ['id', 'DESC']
+            ]
+        });
+
+
+        return logSends; // return the logSends array
+    } catch (error) {
+        console.error('Error retrieving LogSends:', error);
+        throw error;
+    }
+}
+
+
 // module.exports = LogSendController;
-module.exports = { createLogSend, getLogSendsBySession };
+module.exports = { createLogSend, getLogSendsBySession, getLogSendsByKeyName };
