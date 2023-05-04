@@ -77,9 +77,15 @@ async function socketAndLog(io, key, slug, status, data = null) {
   console.log(new Date().toLocaleString() + " | " + status + " api/" + slug + " | key : " + key);
 }
 
+function getLogTime() {
+  const logNow = new Date().toLocaleString() + " | ";
+  return logNow;
+}
+
 module.exports = {
   findAndCheckClient: findAndCheckClient,
   findGroupByNameAsync: findGroupByNameAsync,
   socketAndLog: socketAndLog,
-  findGroupBySlugInvite: findGroupBySlugInvite
+  findGroupBySlugInvite: findGroupBySlugInvite,
+  getLogTime: getLogTime,
 };
