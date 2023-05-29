@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.20.0",
+    "bcrypt": "^5.1.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.9",
@@ -33,7 +34,7 @@
     "qrcode": "^1.4.4",
     "sequelize": "^6.31.0",
     "socket.io": "2.3.0",
-    "whatsapp-web.js": "latest"
+    "whatsapp-web.js": "github:tofers/whatsapp-web.js#upd-newIdV2"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"

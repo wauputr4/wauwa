@@ -11,75 +11,78 @@
         integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
 </head>
 
+<style>
+    .rounded-t-5 {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    @media (min-width: 992px) {
+        .rounded-tr-lg-0 {
+            border-top-right-radius: 0;
+        }
+
+        .rounded-bl-lg-5 {
+            border-bottom-left-radius: 0.5rem;
+        }
+    }
+</style>
+
 <body>
-    <!-- Header -->
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-        <a class="navbar-brand mx-auto" href="#">WauWA API</a>
-    </nav>
 
     <div class="container">
-        <div id="app" class="mt-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                        <i class="fa fa-plus"></i> Tambah Client
-                    </button>
-                </div>
-            </div>
-            <div class="row client-container">
-                <div class="col-md-4 client d-none">
-                    <div class="card mt-3 ">
-                        <div class="card-header">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <h3 class="card-title title"></h3>
-                                    <p class="card-text description"></p>
-                                </div>
-                                <div class="col-md-4">
-                                    <a href="" class="btn btn-sm btn-warning mt-3 link-title">Detail Logs</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body ">
-                            <img src="" alt="QR Code" id="qrcode" class="img-fluid d-none">
-                            <h3>Logs:</h3>
-                            <ul class="logs"></ul>
-                        </div>
-                        <!-- <div class="card-footer">
-                            <a href="#" class="btn btn-primary">Detail Logs</a>
-                        </div> -->
-                    </div>
-                </div>
-            </div>
+        <!-- Section: Design Block -->
+        <section class=" text-center text-lg-start pt-4 m-4">
 
-        </div>
-    </div>
+            <div class="card mb-3 m-4">
+                <div class="row g-0 d-flex align-items-center">
+                    <div class="col-lg-4 d-none d-lg-flex">
+                        <img src="https://mdbootstrap.com/img/new/ecommerce/vertical/004.jpg"
+                            alt="Trendy Pants and Shoes" class="w-100 rounded-t-5 rounded-tr-lg-0 rounded-bl-lg-5" />
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card-body py-5 px-md-5">
 
-    <!-- Add Client Modal -->
-    <div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addClientModalLabel">Tambah Client</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="client-id">ID</label>
-                        <input type="text" class="form-control" id="client-id" placeholder="Masukkan ID">
+                            <form>
+                                <!-- Email input -->
+                                <div class="form-outline mb-4">
+                                    <input type="email" id="form2Example1" class="form-control" />
+                                    <label class="form-label" for="form2Example1">Email address</label>
+                                </div>
+
+                                <!-- Password input -->
+                                <div class="form-outline mb-4">
+                                    <input type="password" id="form2Example2" class="form-control" />
+                                    <label class="form-label" for="form2Example2">Password</label>
+                                </div>
+
+                                <!-- 2 column grid layout for inline styling -->
+                                <div class="row mb-4">
+                                    <div class="col d-flex justify-content-center">
+                                        <!-- Checkbox -->
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="" id="form2Example31"
+                                                checked />
+                                            <label class="form-check-label" for="form2Example31"> Remember me </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- <div class="col">
+                                        <a href="#!">Forgot password?</a>
+                                    </div> -->
+                                </div>
+
+                                <!-- Submit button -->
+                                <button type="button" class="btn btn-primary btn-block mb-4">Sign in</button>
+
+                            </form>
+
+                        </div>
                     </div>
-                    <div class="form-group mt-2">
-                        <label for="client-description">Deskripsi</label>
-                        <textarea class="form-control" rows="3" id="client-description"
-                            placeholder="Masukkan deskripsi"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary add-client-btn">Tambah Client changes</button>
                 </div>
             </div>
-        </div>
+        </section>
+        <!-- Section: Design Block -->
     </div>
 
     <!-- <footer class="bg-dark text-white mt-3 p-3 text-center">WauWA (WhatsAPP API) By Wauputra</footer> -->
