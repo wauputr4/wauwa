@@ -254,6 +254,24 @@ app.get('/list', (req, res) => {
   res.render('session-list');
 });
 
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Call the login function from the UserController
+  const user = await UserController.login(username, password);
+
+  if (user) {
+    // User logged in successfully
+    res.status(200).json({ message: 'Login successful', user: user });
+  } else {
+    // Invalid username or password
+    res.status(401).json({ message: 'Invalid username or password' });
+  }
+});
+
 app.get('/list/:slug', async (req, res) => {
   const slug = req.params.slug;
   const savedSessions = getSessionsFile();
