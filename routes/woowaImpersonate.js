@@ -47,7 +47,8 @@ module.exports = (io, sessions) => {
   //Endpoint Send message Woowa
   router.post("/send_message", async (req, res) => {
     const key = req.body.key;
-    const phone_no = phoneNumberFormatter(req.body.phone_no);
+    //const phone_no = phoneNumberFormatter(req.body.phone_no);
+    const phone_no = phoneNumberFormatter(String(req.body.phone_no));
     const message = req.body.message;
 
     try {
@@ -63,6 +64,7 @@ module.exports = (io, sessions) => {
       }
 
       const response = await client.sendMessage(phone_no, message);
+
       socketAndLog(io, key, "send_message", "Success", {
         method_type: "send",
         to: phone_no,
