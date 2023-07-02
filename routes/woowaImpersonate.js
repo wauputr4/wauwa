@@ -9,6 +9,7 @@ module.exports = (io, sessions) => {
   } = require("../helpers/utils");
   const { phoneNumberFormatter } = require("../helpers/formatter");
   const { body, validationResult } = require("express-validator");
+  const throttleHelper = require('./helpers/throttle');
 
   // Endpoint untuk mendapatkan daftar check_number
   router.post("/check_number", async (req, res) => {
@@ -45,7 +46,8 @@ module.exports = (io, sessions) => {
 
 
   //Endpoint Send message Woowa
-  router.post("/send_message", async (req, res) => {
+  router.post("/send_message", throttleHelper, async (req, res) => {
+  // router.post("/send_message", async (req, res) => {
     const key = req.body.key;
     //const phone_no = phoneNumberFormatter(req.body.phone_no);
     const phone_no = phoneNumberFormatter(String(req.body.phone_no));
