@@ -12,22 +12,27 @@ function findAndCheckClient(key, sessions) {
 }
 
 
-//Cari Group Berdasarkan Nama
 async function findGroupByNameAsync(name, client) {
-  const chats = await client.getChats();
-  const group = chats.find(
-    (chat) => chat.isGroup && chat.name.toLowerCase() == name.toLowerCase()
-  );
+  try {
+    const chats = await client.getChats();
+    const group = chats.find(
+      (chat) => chat.isGroup && chat.name.toLowerCase() == name.toLowerCase()
+    );
 
-  if (!group) {
-    throw new Error(`No group found with name: ${name}`);
+    if (!group) {
+      throw new Error(`No group found with name: ${name}`);
+    }
+
+    return group;
+  } catch (error) {
+    console.error('Error occurred while finding group:', error);
+    return null; // Change to return null instead of false
   }
-
-  return group;
 }
 
 
-//Cari Group Berdasarkan Slug Invited Code
+
+
 async function findGroupBySlugInvite(slug, client, key) {
   const group = await client.getInviteInfo(slug);
 
@@ -36,17 +41,29 @@ async function findGroupBySlugInvite(slug, client, key) {
   const serialize_id = await SessionController.getSessionSerializeId(key);
   console.log('serialize_id :', serialize_id);
 
-  const isParticipant = group.participants.some(participant => {
-    console.log('participant.id._serialize_id :', participant.id._serialized);
-    return participant.id._serialized === serialize_id;
-  });
+  let isParticipant = false;
+  try {
+    isParticipant = group.participants.some(participant => {
+      console.log('participant.id._serialize_id :', participant.id._serialized);
+      return participant.id._serialized === serialize_id;
+    });
+  } catch (error) {
+    // Handle the error gracefully
+    console.error('An error occurred while checking participants:', error);
+    // You can choose to return a default value or continue execution
+    // return defaultValue;
+  }
 
   if (!isParticipant) {
-    throw new Error(`You are not joined with group ${group.subject}`);
+    console.warn(`You are not joined with group ${group.subject}`);
+    // You can choose to return a default value or continue execution
+    // return defaultValue;
   }
 
   return group;
 }
+
+
 
 
 //Log Enpoint & IO

@@ -9,7 +9,7 @@ module.exports = (io, sessions) => {
   } = require("../helpers/utils");
   const { phoneNumberFormatter } = require("../helpers/formatter");
   const { body, validationResult } = require("express-validator");
-  const throttleHelper = require('./helpers/throttle');
+  const throttleHelper = require('../helpers/throttle');
 
   // Endpoint untuk mendapatkan daftar check_number
   router.post("/check_number", async (req, res) => {
@@ -135,9 +135,12 @@ module.exports = (io, sessions) => {
       const client = findAndCheckClient(key, sessions);
       if (!chatId) {
         const group = await findGroupByNameAsync(group_name, client);
-        // chatId = group?.id?._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })(); //old
-        chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
+        chatId = group && group.id && group.id._serialized;
+        if (!chatId) {
+          throw new Error(`No group found with name: ${group_name}`);
+        }
       }
+
       const response = await client.sendMessage(chatId, message);
 
       socketAndLog(io, key, "async_send_group", "Success", {
@@ -194,7 +197,6 @@ module.exports = (io, sessions) => {
       const client = findAndCheckClient(key, sessions);
 
       const group = await findGroupBySlugInvite(group_id, client, key);
-      // const chatId = group?.id?._serialized || (() => { throw new Error(`No group found with id: ${group_id}`) })(); //old
       const chatId = group && group.id && group.id._serialized || (() => { throw new Error(`No group found with name: ${group_name}`) })();
 
       const response = await client.sendMessage(chatId, message);

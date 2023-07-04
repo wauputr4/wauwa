@@ -1,4 +1,4 @@
-const { Client, MessageMedia, LocalAuth } = require('whatsapp-web.js');
+const { Client, MessageMedia, LocalAuth, Label } = require('whatsapp-web.js');
 const express = require('express');
 const socketIO = require('socket.io');
 const qrcode = require('qrcode');
@@ -240,10 +240,14 @@ io.on('connection', function (socket) {
 });
 
 //Endpoint Login QR & get Status
+// app.get('/', (req, res) => {
+//   res.sendFile('index-multiple-account.html', {
+//     root: __dirname
+//   });
+// });
+
 app.get('/', (req, res) => {
-  res.sendFile('index-multiple-account.html', {
-    root: __dirname
-  });
+  res.redirect('/list');
 });
 
 // set the view engine to ejs
@@ -382,6 +386,54 @@ app.get('/api/labels', async (req, res) => {
       console.log(getLogTime() + '/api/labels key : ' + key);
     });
 
+});
+
+//Endpoint get chats by label
+app.get('/api/label/chats', async (req, res) => {
+  //get Params
+  const { key,labelid } = req.query;
+  console.log(getLogTime() + 'key ' + key);
+
+  //get client session
+  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+
+  
+
+  // Make sure the key is exists & ready
+  if (!client) {
+    return res.status(422).json({
+      status: false,
+      message: getLogTime() + `The key: ${key} is not found!`
+    })
+  }
+
+  client.getChatsByLabelId(labelid)
+    .then(response => {
+      const chats = response.map(chat => {
+        return {
+          id: chat.id.user,
+          name: chat.name,
+          isGroup: chat.isGroup,
+          id_serialized: chat.id._serialized,
+          detail: chat
+        };
+      });
+
+      res.status(200).json({
+        status: true,
+        response: chats
+      });
+    })
+    .catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err
+      });
+    })
+    .finally(() => {
+      io.emit('message', { id: key, text: getLogTime() + 'success get getChats by label ' });
+      console.log(getLogTime() + '/api/label/chats key : ' + key);
+    });
 });
 
 const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io, sessions);
