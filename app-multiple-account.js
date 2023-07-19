@@ -475,6 +475,39 @@ app.post("/api/get_group", async (req, res) => {
   }
 });
 
+//route delete client and session
+app.delete('/api/client', async (req, res) => {
+  try {
+    //get Params
+    const key = req.body.key;
+    console.log(getLogTime() + 'key : ' + key + ' is deleted');
+
+    //get client session
+    const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+    client.destroy();
+    client.initialize();
+
+    // Menghapus pada file sessions
+    const savedSessions = getSessionsFile();
+    const sessionIndex = savedSessions.findIndex(sess => sess.id == key);
+    savedSessions.splice(sessionIndex, 1);
+    setSessionsFile(savedSessions);
+
+    io.emit('remove-session', key);
+
+    //return
+    res.status(200).json({
+      status: true,
+      message: getLogTime() + 'success delete client and session'
+    });
+    
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
 
 server.listen(port, function () {
   console.log(getLogTime() + 'App running on *: ' + port);
