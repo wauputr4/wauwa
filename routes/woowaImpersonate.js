@@ -46,8 +46,8 @@ module.exports = (io, sessions) => {
 
 
   //Endpoint Send message Woowa
-  router.post("/send_message", throttleHelper, async (req, res) => {
-  // router.post("/send_message", async (req, res) => {
+  // router.post("/send_message", throttleHelper, async (req, res) => {
+  router.post("/send_message", async (req, res) => {
     const key = req.body.key;
     //const phone_no = phoneNumberFormatter(req.body.phone_no);
     const phone_no = phoneNumberFormatter(String(req.body.phone_no));
