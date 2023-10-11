@@ -21,6 +21,7 @@ const port = `${appConfig.port}` || 8002;
 const LogSendController = require('./controllers/LogSendController.js');
 
 const ejs = require('ejs');
+const puppeteer = require('puppeteer');
 
 // Author @wauputra
 // email : wauputr4@gmail.com
@@ -62,29 +63,41 @@ const getSessionsFile = function () {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-const createSession = function (id, description) {
+
+const createSession = async function (id, description) {
   console.log(getLogTime() + 'Creating session: ' + id);
+  // const browser = await puppeteer.launch({ headless: false });
+
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process', // <- this one doesn't works in Windows
-        '--disable-gpu'
-      ],
+      // args: [
+      //   '--no-sandbox',
+      //   '--disable-setuid-sandbox',
+      //   '--disable-dev-shm-usage',
+      //   '--disable-accelerated-2d-canvas',
+      //   '--no-first-run',
+      //   '--no-zygote',
+      //   '--single-process', // <- this one doesn't works in Windows
+      //   '--disable-gpu'
+      // ],
     },
     authStrategy: new LocalAuth({
       clientId: id
     })
   });
+  // const client = new Client({
+  //   restartOnAuthFail: true,
+  //   puppeteer: { browser },
+  //   authStrategy: new LocalAuth({ clientId: id })
+  // });
 
+try {
   client.initialize();
+} catch (error) {
+    console.error('Error initialize client', error);
+}
 
   client.on('qr', (qr) => {
     console.log(getLogTime() + 'QR Received', qr);
@@ -147,6 +160,12 @@ const createSession = function (id, description) {
     io.emit('remove-session', id);
   });
 
+  client.on('message', message => {
+    console.log(getLogTime() + 'ID : ' + id + ' message : ' + message.body);
+    const { handlePing } = require('./controllers/MessageController.js');
+    handlePing(message);
+  });
+   
   // const axios = require('axios');
   // const openaiApiKey = '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'; // ganti dengan kunci API Anda
   // const openaiApiUrl = 'https://api.openai.com/v1/';
