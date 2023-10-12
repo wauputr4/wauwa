@@ -27,9 +27,9 @@ Menjalankan diserver perlu package PM2, Untuk menggunakan process manager sepert
 dapat membaca dokumentasi PM2 di https://pm2.keymetrics.io/.
 
 ### Migration
-Make Migration : `npx sequelize-cli migration:generate --name add_phone_to_users`
-Running Migration : `npx sequelize-cli db:migrate --config=config/database.js`
-Rollback Migration : `npx sequelize-cli db:migrate:undo --config=config/database.js`
+- Make Migration : `npx sequelize-cli migration:generate --name add_phone_to_users`
+- Running Migration : `npx sequelize-cli db:migrate --config=config/database.js`
+- Rollback Migration : `npx sequelize-cli db:migrate:undo --config=config/database.js`
 
 ## Endpoint Documentation : 
 ### POST send message (woowa eco)
