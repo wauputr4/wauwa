@@ -38,6 +38,7 @@ async function createOrUpdateSession(sessionData) {
         }
 
         console.log(`Session with key_name "${keyName}" was ${created ? 'created' : 'updated'}.`);
+        return session;
     } catch (error) {
         console.error('Error creating/updating session:', error);
     }
