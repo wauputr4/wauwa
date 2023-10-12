@@ -63,7 +63,6 @@ const getSessionsFile = function () {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-
 const createSession = async function (id, description) {
   console.log(getLogTime() + 'Creating session: ' + id);
   // const browser = await puppeteer.launch({ headless: false });
@@ -107,7 +106,7 @@ try {
     });
   });
 
-  client.on('ready', () => {
+  client.on('ready', async () => {
     console.log(getLogTime() + 'ID : ' + id + ' is ready');
     io.emit('ready', { id: id });
     io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is ready!' });
@@ -115,11 +114,8 @@ try {
     //menyimpan sesi
     const savedSessions = getSessionsFile();
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-    savedSessions[sessionIndex].ready = true;
-    setSessionsFile(savedSessions);
-
+    
     //createorupdate db session
-
     const clientInfo = client.info;
     const sessionData = {
       keyName: savedSessions[sessionIndex].id,
@@ -131,7 +127,13 @@ try {
       serialize_id: clientInfo.me._serialized,
     };
 
-    SessionController.createOrUpdateSession(sessionData);
+    const sess = await SessionController.createOrUpdateSession(sessionData);
+
+    savedSessions[sessionIndex].ready = true;
+    savedSessions[sessionIndex].number = sess.number;
+    savedSessions[sessionIndex].key_hash = sess.key_hash;
+    savedSessions[sessionIndex].is_need_callback = sess.is_need_callback ? sess.is_need_callback : false;
+    setSessionsFile(savedSessions);
   });
 
   client.on('authenticated', () => {
@@ -160,51 +162,17 @@ try {
     io.emit('remove-session', id);
   });
 
-  client.on('message', message => {
-    console.log(getLogTime() + 'ID : ' + id + ' message : ' + message.body);
-    const { handlePing } = require('./controllers/MessageController.js');
-    handlePing(message);
+  client.on('message', async message => {
+    //jika savedSessions is_need_callback true maka akan di proses
+    const savedSessions = getSessionsFile();
+    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+    const isNeedCallback = savedSessions[sessionIndex].is_need_callback;
+    
+    if (isNeedCallback == true) {
+      const MessageCtl = require("./controllers/MessageController")(io, sessions);
+      const Message = await MessageCtl.handleAsBot(message, id);
+    }
   });
-   
-  // const axios = require('axios');
-  // const openaiApiKey = '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'; // ganti dengan kunci API Anda
-  // const openaiApiUrl = 'https://api.openai.com/v1/';
-
-  // function generateResponse(prompt) {
-  //   const headers = {
-  //     'Content-Type': 'application/json',
-  //     'Authorization': `Bearer ${openaiApiKey}`,
-  //   };
-
-  //   const data = {
-  //     "model": "gpt-3.5-turbo",
-  //     "messages": [{ "role": "user", "content": prompt }]
-  //   };
-
-  //   return axios.post(`${openaiApiUrl}/chat/completions`, data, { headers: headers })
-  //     .then(response => {
-  //       const answer = response.data.choices[0].text.trim();
-  //       return answer;
-  //     })
-  //     .catch(error => {
-  //       console.log(error);
-  //       return 'Maaf, terjadi kesalahan dalam mengambil respons dari ChatGPT : ' + error;
-  //     });
-  // }
-
-  // client.on('message', msg => {
-  //   if (msg.body == '!gpt') {
-  //     const prompt = 'Halo ChatGPT, apa kabar?'; // ganti prompt sesuai keinginan Anda
-  //     generateResponse(prompt)
-  //       .then(response => {
-  //         msg.reply(response);
-  //       })
-  //       .catch(error => {
-  //         console.log(error);
-  //         msg.reply('ada error : ' + error);
-  //       });
-  //   }
-  // });
 
   // Tambahkan client ke sessions
   sessions.push({

@@ -1,5 +1,6 @@
 const { Sequelize, Model, DataTypes } = require('sequelize');
 const config = require('../config/database');
+const { Session } = require('./Session');
 
 // Create Sequelize connection
 const sequelize = new Sequelize(config.database, config.user, config.password, {
@@ -18,24 +19,27 @@ sequelize.authenticate()
         console.error('Unable to connect to MySQL database:', error);
     });
 
-// Define model for sessions table
-class Session extends Model { }
-Session.init({
-    key_name: DataTypes.STRING,
-    key_hash: DataTypes.STRING,
-    description: DataTypes.TEXT,
-    ready: DataTypes.BOOLEAN,
-    number: DataTypes.STRING,
-    platform: DataTypes.STRING,
-    pushname: DataTypes.STRING,
-    serialize_id: DataTypes.STRING,
+
+// Define model for log_send table
+class ClientBot extends Model { }
+ClientBot.init({
+    session_id: DataTypes.INTEGER,
+    session_label: DataTypes.STRING,
+    method: DataTypes.STRING,
+    format: DataTypes.STRING,
+    not_match_response_method: DataTypes.STRING,
+    not_match_response: DataTypes.TEXT,
+    match_response_method: DataTypes.STRING,
+    match_response: DataTypes.TEXT,
     app_version: DataTypes.STRING,
-    wwebjs_version: DataTypes.STRING,
-    is_need_callback : DataTypes.BOOLEAN
-}, { sequelize, modelName: 'sessions' });
+    wwebjs_version: DataTypes.STRING
+}, { sequelize, modelName: 'client_bots' });
+
+// Define association with Session model
+ClientBot.belongsTo(Session, { foreignKey: 'session_id' });
 
 // Export Sequelize connection and model
 module.exports = {
     sequelize,
-    Session
+    ClientBot,
 };
