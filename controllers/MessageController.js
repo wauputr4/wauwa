@@ -106,7 +106,7 @@ module.exports = (io, sessions) => {
       }
 
       console.log(`sending forward to : ${match_response}`);
-      callBackUrlFetch(bot, message);
+      callBackUrlAxios(bot, message);
     } else if (not_match_response_method === "url") {
       // if (!not_match_response) {
       //   console.log(`Error : ${not_match_response}`);
@@ -183,6 +183,34 @@ module.exports = (io, sessions) => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  // CallBackwithAxios
+  const callBackUrlAxios = async (bot, message) => {
+    const axios = require("axios");
+    let data = JSON.stringify({
+      phone: message.from,
+      recitation: message.body,
+    });
+
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: bot.match_response,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: data,
+    };
+
+    axios
+      .request(config)
+      .then((response) => {
+        console.log(JSON.stringify(response.data));
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return {
