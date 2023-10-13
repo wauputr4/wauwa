@@ -106,7 +106,7 @@ module.exports = (io, sessions) => {
       }
 
       console.log(`sending forward to : ${match_response}`);
-      callBackUrl(bot, message);
+      callBackUrlFetch(bot, message);
     } else if (not_match_response_method === "url") {
       // if (!not_match_response) {
       //   console.log(`Error : ${not_match_response}`);
@@ -146,6 +146,43 @@ module.exports = (io, sessions) => {
 
     req.write(data);
     req.end();
+  };
+
+  const callBackUrlFetch = async (bot, message) => {
+    require("isomorphic-fetch");
+
+    const data = JSON.stringify({
+      phone: message.from,
+      recitation: message.body,
+    });
+
+    const url = bot.match_response;
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: data,
+    };
+
+    try {
+      const response = await fetch(url, options);
+
+      console.log(
+        `statusCode: ${response.status} because ${response.statusText}`
+      );
+
+      if (response.status === 200) {
+        const responseData = await response.json();
+        //console log show data as json or not json
+        console.log(responseData);
+      } else {
+        console.error("Request failed");
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return {
