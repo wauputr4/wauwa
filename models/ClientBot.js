@@ -28,6 +28,7 @@ ClientBot.init(
     session_label: DataTypes.STRING,
     method: DataTypes.STRING,
     format: DataTypes.STRING,
+    format_slicing: DataTypes.STRING,
     not_match_response_method: DataTypes.STRING,
     not_match_response: DataTypes.TEXT,
     not_match_response_reply: DataTypes.TEXT,

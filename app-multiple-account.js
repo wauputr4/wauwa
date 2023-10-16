@@ -1,53 +1,57 @@
-const { Client, MessageMedia, LocalAuth, Label } = require('whatsapp-web.js');
-const express = require('express');
-const socketIO = require('socket.io');
-const qrcode = require('qrcode');
-const http = require('http');
-const fs = require('fs');
-const { phoneNumberFormatter } = require('./helpers/formatter');
-const fileUpload = require('express-fileupload');
-const axios = require('axios');
+const { Client, MessageMedia, LocalAuth, Label } = require("whatsapp-web.js");
+const express = require("express");
+const socketIO = require("socket.io");
+const qrcode = require("qrcode");
+const http = require("http");
+const fs = require("fs");
+const { phoneNumberFormatter } = require("./helpers/formatter");
+const fileUpload = require("express-fileupload");
+const axios = require("axios");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-const SessionController = require('./controllers/SessionController.js');
+const SessionController = require("./controllers/SessionController.js");
 
-const { findAndCheckClient, getLogTime } = require('./helpers/utils');
-const appConfig = require('./config/app.js');
+const { findAndCheckClient, getLogTime } = require("./helpers/utils");
+const appConfig = require("./config/app.js");
 const port = `${appConfig.port}` || 8002;
 
-const LogSendController = require('./controllers/LogSendController.js');
+const LogSendController = require("./controllers/LogSendController.js");
 
-const ejs = require('ejs');
-const puppeteer = require('puppeteer');
+const ejs = require("ejs");
+const puppeteer = require("puppeteer");
 
 // Author @wauputra
 // email : wauputr4@gmail.com
 
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: true
-}));
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
-app.use(fileUpload({
-  debug: false
-}));
+app.use(
+  fileUpload({
+    debug: false,
+  })
+);
 
 const sessions = [];
-const SESSIONS_FILE = './whatsapp-sessions.json';
+const SESSIONS_FILE = "./whatsapp-sessions.json";
 
 const createSessionsFileIfNotExists = function () {
   if (!fs.existsSync(SESSIONS_FILE)) {
     try {
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify([]));
-      console.log(getLogTime() + 'Sessions file created successfully.');
+      console.log(getLogTime() + "Sessions file created successfully.");
     } catch (err) {
-      console.log(getLogTime() + 'Failed to create sessions file: ', err);
+      console.log(getLogTime() + "Failed to create sessions file: ", err);
     }
   }
-}
+};
 
 createSessionsFileIfNotExists();
 
@@ -57,14 +61,14 @@ const setSessionsFile = function (sessions) {
       console.log(getLogTime() + err);
     }
   });
-}
+};
 
 const getSessionsFile = function () {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
-}
+};
 
 const createSession = async function (id, description) {
-  console.log(getLogTime() + 'Creating session: ' + id);
+  console.log(getLogTime() + "Creating session: " + id);
   // const browser = await puppeteer.launch({ headless: false });
 
   const client = new Client({
@@ -83,8 +87,8 @@ const createSession = async function (id, description) {
        ],
     },
     authStrategy: new LocalAuth({
-      clientId: id
-    })
+      clientId: id,
+    }),
   });
   // const client = new Client({
   //   restartOnAuthFail: true,
@@ -92,29 +96,32 @@ const createSession = async function (id, description) {
   //   authStrategy: new LocalAuth({ clientId: id })
   // });
 
-try {
-  client.initialize();
-} catch (error) {
-    console.error('Error initialize client', error);
-}
+  try {
+    client.initialize();
+  } catch (error) {
+    console.error("Error initialize client", error);
+  }
 
-  client.on('qr', (qr) => {
-    console.log(getLogTime() + 'QR Received', qr);
+  client.on("qr", (qr) => {
+    console.log(getLogTime() + "QR Received", qr);
     qrcode.toDataURL(qr, (err, url) => {
-      io.emit('qr', { id: id, src: url });
-      io.emit('message', { id: id, text: getLogTime() + 'QR Code received, scan please!' });
+      io.emit("qr", { id: id, src: url });
+      io.emit("message", {
+        id: id,
+        text: getLogTime() + "QR Code received, scan please!",
+      });
     });
   });
 
-  client.on('ready', async () => {
-    console.log(getLogTime() + 'ID : ' + id + ' is ready');
-    io.emit('ready', { id: id });
-    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is ready!' });
+  client.on("ready", async () => {
+    console.log(getLogTime() + "ID : " + id + " is ready");
+    io.emit("ready", { id: id });
+    io.emit("message", { id: id, text: getLogTime() + "Whatsapp is ready!" });
 
     //menyimpan sesi
     const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-    
+    const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
+
     //createorupdate db session
     const clientInfo = client.info;
     const sessionData = {
@@ -129,47 +136,68 @@ try {
 
     const sess = await SessionController.createOrUpdateSession(sessionData);
 
-    savedSessions[sessionIndex].ready = true;
-    savedSessions[sessionIndex].number = sess.number;
-    savedSessions[sessionIndex].key_hash = sess.key_hash;
-    savedSessions[sessionIndex].is_need_callback = sess.is_need_callback ? sess.is_need_callback : false;
-    setSessionsFile(savedSessions);
+    try {
+      savedSessions[sessionIndex].ready = true;
+      savedSessions[sessionIndex].number = sess.number;
+      savedSessions[sessionIndex].key_hash = sess.key_hash;
+      savedSessions[sessionIndex].is_need_callback = sess.is_need_callback
+        ? sess.is_need_callback
+        : false;
+      setSessionsFile(savedSessions);
+    } catch (error) {
+      console.log(
+        getLogTime() + "Error updating session to sessions file: ",
+        error
+      );
+    }
   });
 
-  client.on('authenticated', () => {
-    console.log(getLogTime() + 'ID : ' + id + ' is authenticated');
-    io.emit('authenticated', { id: id });
-    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is authenticated!' });
+  client.on("authenticated", () => {
+    console.log(getLogTime() + "ID : " + id + " is authenticated");
+    io.emit("authenticated", { id: id });
+    io.emit("message", {
+      id: id,
+      text: getLogTime() + "Whatsapp is authenticated!",
+    });
   });
 
-  client.on('auth_failure', function () {
-    console.log(getLogTime() + 'ID : ' + id + ' is auth failure');
-    io.emit('message', { id: id, text: getLogTime() + 'Auth failure, restarting...' });
+  client.on("auth_failure", function () {
+    console.log(getLogTime() + "ID : " + id + " is auth failure");
+    io.emit("message", {
+      id: id,
+      text: getLogTime() + "Auth failure, restarting...",
+    });
   });
 
-  client.on('disconnected', (reason) => {
-    console.log(getLogTime() + 'ID : ' + id + ' is disconnected');
-    io.emit('message', { id: id, text: getLogTime() + 'Whatsapp is disconnected!' });
+  client.on("disconnected", (reason) => {
+    console.log(getLogTime() + "ID : " + id + " is disconnected");
+    io.emit("message", {
+      id: id,
+      text: getLogTime() + "Whatsapp is disconnected!",
+    });
     client.destroy();
     client.initialize();
 
     // Menghapus pada file sessions
     const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+    const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
     savedSessions.splice(sessionIndex, 1);
     setSessionsFile(savedSessions);
 
-    io.emit('remove-session', id);
+    io.emit("remove-session", id);
   });
 
-  client.on('message', async message => {
+  client.on("message", async (message) => {
     //jika savedSessions is_need_callback true maka akan di proses
     const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+    const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
     const isNeedCallback = savedSessions[sessionIndex].is_need_callback;
-    
+
     if (isNeedCallback == true) {
-      const MessageCtl = require("./controllers/MessageController")(io, sessions);
+      const MessageCtl = require("./controllers/MessageController")(
+        io,
+        sessions
+      );
       const Message = await MessageCtl.handleAsBot(message, id);
     }
   });
@@ -178,12 +206,12 @@ try {
   sessions.push({
     id: id,
     description: description,
-    client: client
+    client: client,
   });
 
   // Menambahkan session ke file
   const savedSessions = getSessionsFile();
-  const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+  const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
 
   if (sessionIndex == -1) {
     savedSessions.push({
@@ -193,8 +221,7 @@ try {
     });
     setSessionsFile(savedSessions);
   }
-
-}
+};
 
 const init = function (socket) {
   const savedSessions = getSessionsFile();
@@ -205,23 +232,23 @@ const init = function (socket) {
         // arr[i].ready = false;
       });
 
-      socket.emit('init', savedSessions);
+      socket.emit("init", savedSessions);
     } else {
-      savedSessions.forEach(sess => {
+      savedSessions.forEach((sess) => {
         createSession(sess.id, sess.description);
       });
     }
   }
-}
+};
 
 init();
 
 // Socket IO
-io.on('connection', function (socket) {
+io.on("connection", function (socket) {
   init(socket);
 
-  socket.on('create-session', function (data) {
-    console.log(getLogTime() + 'Create session: ' + data.id);
+  socket.on("create-session", function (data) {
+    console.log(getLogTime() + "Create session: " + data.id);
     createSession(data.id, data.description);
   });
 });
@@ -233,22 +260,22 @@ io.on('connection', function (socket) {
 //   });
 // });
 
-app.get('/', (req, res) => {
-  res.redirect('/list');
+app.get("/", (req, res) => {
+  res.redirect("/list");
 });
 
 // set the view engine to ejs
-app.set('views', './views');
-app.set('view engine', 'ejs');
+app.set("views", "./views");
+app.set("view engine", "ejs");
 
-app.get('/list', (req, res) => {
-  res.render('session-list');
+app.get("/list", (req, res) => {
+  res.render("session-list");
 });
 
-app.get('/login', (req, res) => {
-  res.render('login');
+app.get("/login", (req, res) => {
+  res.render("login");
 });
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   // Call the login function from the UserController
@@ -256,17 +283,17 @@ app.post('/login', async (req, res) => {
 
   if (user) {
     // User logged in successfully
-    res.status(200).json({ message: 'Login successful', user: user });
+    res.status(200).json({ message: "Login successful", user: user });
   } else {
     // Invalid username or password
-    res.status(401).json({ message: 'Invalid username or password' });
+    res.status(401).json({ message: "Invalid username or password" });
   }
 });
 
-app.get('/list/:slug', async (req, res) => {
+app.get("/list/:slug", async (req, res) => {
   const slug = req.params.slug;
   const savedSessions = getSessionsFile();
-  const sessionIndex = savedSessions.findIndex(sess => sess.id == slug);
+  const sessionIndex = savedSessions.findIndex((sess) => sess.id == slug);
 
   //get Session Detail from db with getSessionId on SessionController
   const SessionController = require("./controllers/SessionController");
@@ -276,7 +303,7 @@ app.get('/list/:slug', async (req, res) => {
   if (!Session) {
     return res.status(404).json({
       status: false,
-      message: getLogTime() + `The key: ${slug} is not found`
+      message: getLogTime() + `The key: ${slug} is not found`,
     });
   }
 
@@ -285,149 +312,167 @@ app.get('/list/:slug', async (req, res) => {
 
   // console.log('LogSend : ', LogSend);
 
-  res.render('session-detail', {
+  res.render("session-detail", {
     session: savedSessions[sessionIndex],
     logsend: LogSend,
-    varSession: Session
+    varSession: Session,
   });
-
 });
 
-
 //Endpoint get chats
-app.get('/api/chats', async (req, res) => {
+app.get("/api/chats", async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log(getLogTime() + 'key ' + key);
+  console.log(getLogTime() + "key " + key);
 
   //get client session
-  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+  const client =
+    sessions.find((sess) => sess.id == key) &&
+    sessions.find((sess) => sess.id == key).client;
 
   // Make sure the key is exists & ready
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: getLogTime() + `The key: ${key} is not found!`
-    })
+      message: getLogTime() + `The key: ${key} is not found!`,
+    });
   }
 
-  client.getChats()
-    .then(response => {
-      const chats = response.map(chat => {
+  client
+    .getChats()
+    .then((response) => {
+      const chats = response.map((chat) => {
         return {
           id: chat.id.user,
           name: chat.name,
           isGroup: chat.isGroup,
           id_serialized: chat.id._serialized,
-          detail: chat
+          detail: chat,
         };
       });
 
       res.status(200).json({
         status: true,
-        response: chats
+        response: chats,
       });
     })
-    .catch(err => {
+    .catch((err) => {
       res.status(500).json({
         status: false,
-        response: err
+        response: err,
       });
     })
     .finally(() => {
-      io.emit('message', { id: key, text: getLogTime() + 'success get getChats ' });
-      console.log(getLogTime() + '/api/chats key : ' + key);
+      io.emit("message", {
+        id: key,
+        text: getLogTime() + "success get getChats ",
+      });
+      console.log(getLogTime() + "/api/chats key : " + key);
     });
 });
 
 //Endpoint get labels list
-app.get('/api/labels', async (req, res) => {
+app.get("/api/labels", async (req, res) => {
   //get Params
   const { key } = req.query;
-  console.log(getLogTime() + 'key ' + key);
+  console.log(getLogTime() + "key " + key);
 
   //get client session
-  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+  const client =
+    sessions.find((sess) => sess.id == key) &&
+    sessions.find((sess) => sess.id == key).client;
 
   // Make sure the key is exists & ready
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: getLogTime() + `The key: ${key} is not found!`
-    })
+      message: getLogTime() + `The key: ${key} is not found!`,
+    });
   }
 
-  client.getLabels()
-    .then(response => {
+  client
+    .getLabels()
+    .then((response) => {
       res.status(200).json({
         status: true,
-        response: response
+        response: response,
       });
-    }).catch(err => {
+    })
+    .catch((err) => {
       res.status(500).json({
         status: false,
-        response: err
+        response: err,
       });
-    }).finally(() => {
-      io.emit('message', { id: key, text: getLogTime() + 'success get labels ' });
-      console.log(getLogTime() + '/api/labels key : ' + key);
+    })
+    .finally(() => {
+      io.emit("message", {
+        id: key,
+        text: getLogTime() + "success get labels ",
+      });
+      console.log(getLogTime() + "/api/labels key : " + key);
     });
-
 });
 
 //Endpoint get chats by label
-app.get('/api/label/chats', async (req, res) => {
+app.get("/api/label/chats", async (req, res) => {
   //get Params
-  const { key,labelid } = req.query;
-  console.log(getLogTime() + 'key ' + key);
+  const { key, labelid } = req.query;
+  console.log(getLogTime() + "key " + key);
 
   //get client session
-  const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
-
-  
+  const client =
+    sessions.find((sess) => sess.id == key) &&
+    sessions.find((sess) => sess.id == key).client;
 
   // Make sure the key is exists & ready
   if (!client) {
     return res.status(422).json({
       status: false,
-      message: getLogTime() + `The key: ${key} is not found!`
-    })
+      message: getLogTime() + `The key: ${key} is not found!`,
+    });
   }
 
-  client.getChatsByLabelId(labelid)
-    .then(response => {
-      const chats = response.map(chat => {
+  client
+    .getChatsByLabelId(labelid)
+    .then((response) => {
+      const chats = response.map((chat) => {
         return {
           id: chat.id.user,
           name: chat.name,
           isGroup: chat.isGroup,
           id_serialized: chat.id._serialized,
-          detail: chat
+          detail: chat,
         };
       });
 
       res.status(200).json({
         status: true,
-        response: chats
+        response: chats,
       });
     })
-    .catch(err => {
+    .catch((err) => {
       res.status(500).json({
         status: false,
-        response: err
+        response: err,
       });
     })
     .finally(() => {
-      io.emit('message', { id: key, text: getLogTime() + 'success get getChats by label ' });
-      console.log(getLogTime() + '/api/label/chats key : ' + key);
+      io.emit("message", {
+        id: key,
+        text: getLogTime() + "success get getChats by label ",
+      });
+      console.log(getLogTime() + "/api/label/chats key : " + key);
     });
 });
 
-const woowaImpersonateRouter = require('./routes/woowaImpersonate')(io, sessions);
-app.use('/api', woowaImpersonateRouter);
+const woowaImpersonateRouter = require("./routes/woowaImpersonate")(
+  io,
+  sessions
+);
+app.use("/api", woowaImpersonateRouter);
 
-const getContactsRouter = require('./routes/getContacts')(io, sessions);
-app.use('/api', getContactsRouter);
+const getContactsRouter = require("./routes/getContacts")(io, sessions);
+app.use("/api", getContactsRouter);
 
 app.post("/api/get_group", async (req, res) => {
   // Ambil parameter
@@ -463,39 +508,38 @@ app.post("/api/get_group", async (req, res) => {
 });
 
 //route delete client and session
-app.delete('/api/client', async (req, res) => {
+app.delete("/api/client", async (req, res) => {
   try {
     //get Params
     const key = req.body.key;
-    console.log(getLogTime() + 'key : ' + key + ' is deleted');
+    console.log(getLogTime() + "key : " + key + " is deleted");
 
     //get client session
-    const client = sessions.find(sess => sess.id == key) && sessions.find(sess => sess.id == key).client;
+    const client =
+      sessions.find((sess) => sess.id == key) &&
+      sessions.find((sess) => sess.id == key).client;
     client.destroy();
     client.initialize();
 
     // Menghapus pada file sessions
     const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == key);
+    const sessionIndex = savedSessions.findIndex((sess) => sess.id == key);
     savedSessions.splice(sessionIndex, 1);
     setSessionsFile(savedSessions);
 
-    io.emit('remove-session', key);
+    io.emit("remove-session", key);
 
     //return
     res.status(200).json({
       status: true,
-      message: getLogTime() + 'success delete client and session'
+      message: getLogTime() + "success delete client and session",
     });
-    
   } catch (err) {
-    console.error('Error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-
-
 server.listen(port, function () {
-  console.log(getLogTime() + 'App running on *: ' + port);
+  console.log(getLogTime() + "App running on *: " + port);
 });
