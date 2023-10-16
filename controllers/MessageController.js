@@ -74,10 +74,10 @@ module.exports = (io, sessions) => {
         const regex = new RegExp(bot.format);
         if (regex.test(message.body)) {
           console.log("regex match");
-          const response = checkResponse(bot, "match", message);
+          const response = checkResponse(sess, bot, "match", message);
         } else {
           console.log("regex not match");
-          const response = checkResponse(bot, "not_match", message);
+          const response = checkResponse(sess, bot, "not_match", message);
         }
       }
     }
@@ -85,7 +85,7 @@ module.exports = (io, sessions) => {
     return true;
   };
 
-  const checkResponse = (bot, status, message) => {
+  const checkResponse = (sess, bot, status, message) => {
     const {
       match_response_method,
       match_response,
@@ -106,7 +106,7 @@ module.exports = (io, sessions) => {
       }
 
       console.log(`sending forward to : ${match_response}`);
-      callBackUrlAxios(bot, message);
+      callBackUrlAxios(sess, bot, message);
     } else if (not_match_response_method === "url") {
       // if (!not_match_response) {
       //   console.log(`Error : ${not_match_response}`);
@@ -115,7 +115,7 @@ module.exports = (io, sessions) => {
     }
   };
 
-  const callBackUrl = (bot, message) => {
+  const callBackUrl = (sess, bot, message) => {
     const data = JSON.stringify({
       phone: message.from,
       recitation: message.body,
@@ -148,7 +148,7 @@ module.exports = (io, sessions) => {
     req.end();
   };
 
-  const callBackUrlFetch = async (bot, message) => {
+  const callBackUrlFetch = async (sess, bot, message) => {
     require("isomorphic-fetch");
 
     const data = JSON.stringify({
@@ -186,11 +186,18 @@ module.exports = (io, sessions) => {
   };
 
   // CallBackwithAxios
-  const callBackUrlAxios = async (bot, message) => {
+  const callBackUrlAxios = async (sess, bot, message) => {
+    let recitation = message.body;
+    //remove message.body with text in bot.format_slicing
+    if (bot.format_slicing) {
+      const regex = new RegExp(bot.format_slicing);
+      recitation = message.body.replace(regex, "");
+    }
+
     const axios = require("axios");
     let data = JSON.stringify({
       phone: message.from,
-      recitation: message.body,
+      recitation: recitation,
     });
 
     let config = {
@@ -207,10 +214,71 @@ module.exports = (io, sessions) => {
       .request(config)
       .then((response) => {
         console.log(JSON.stringify(response.data));
+
+        if (response.message) {
+          message.reply(` ${response.message} `);
+        }
+
+        //store log client bot
+        const logClientBot = storeLogClientBot({
+          sess: sess,
+          bot: bot,
+          message: message,
+          response: response,
+        });
       })
       .catch((error) => {
-        console.log(error);
+        let errorResponse = error.response;
+        if (errorResponse) {
+          console.error("Response Data:", errorResponse.data);
+          console.error("Response Status:", errorResponse.status);
+
+          if (errorResponse.data) {
+            errorResponse.data.message
+              ? message.reply(` ${errorResponse.data.message} `)
+              : null;
+          }
+        } else {
+          ///errorResponse with json
+          errorResponse = error;
+          console.error("Error Message:", errorResponse.message);
+        }
+
+        //store log client bot
+        const logClientBot = storeLogClientBot({
+          sess: sess,
+          bot: bot,
+          message: message,
+          response: errorResponse,
+        });
       });
+  };
+
+  //create method save store log client bot responses
+  const storeLogClientBot = (data) => {
+    const LogClientBotResponse = require("../models/LogClientBotResponse");
+
+    let response = {
+      session_id: data.sess.id,
+      session_label: data.sess.key_name,
+      client_bot_id: data.bot.id,
+      request: data.message.body,
+      response: data.response.data, // Extracting the data property from the response
+      status_code: data.response.status,
+      status_string: data.response.statusText,
+    };
+
+    try {
+      const clientBotLog = LogClientBotResponse.create(response);
+
+      return clientBotLog;
+    } catch (error) {
+      console.log(`Error saving log client bot: ${error}`);
+      io.emit("message", {
+        id: data.message.id,
+        text: `Error saving log client bot: ${error.message}`,
+      });
+    }
   };
 
   return {
