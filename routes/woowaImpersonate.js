@@ -228,5 +228,82 @@ module.exports = (io, sessions) => {
     }
   });
 
+
+  //Endpoint Send message Woowa
+  // router.post("/send_message", throttleHelper, async (req, res) => {
+    router.post("/send_button", async (req, res) => {
+      const key = req.body.key;
+      //const phone_no = phoneNumberFormatter(req.body.phone_no);
+      const phone_no = phoneNumberFormatter(String(req.body.phone_no));
+      const message = req.body.message;
+  
+      try {
+        const client = findAndCheckClient(key, sessions);
+  
+        //checkNumber Register
+        const isRegisteredNumber = await client.isRegisteredUser(phone_no);
+        if (!isRegisteredNumber) {
+          return res.status(422).json({
+            status: false,
+            message: "The phone_no is not registered",
+          });
+        }
+  
+        const response = await client.sendMessage(phone_no, message);
+  
+        socketAndLog(io, key, "send_message", "Success", {
+          method_type: "send",
+          to: phone_no,
+          message: message,
+          response: response,
+          is_group: 0,
+        });
+  
+        res.status(200).json({
+          status: true,
+          response: response,
+        });
+  
+        // client
+        //   .sendMessage(phone_no, message)
+        //   .then((response) => {
+        //     res.status(200).json({
+        //       status: true,
+        //       response: response,
+        //     });
+        //   })
+        //   .catch((err) => {
+        //     res.status(500).json({
+        //       status: false,
+        //       response: err.message,
+        //     });
+        //   })
+        //   .finally((response) => {
+        //     socketAndLog(io, key, "send_message", "Success", {
+        //       method_type: "send",
+        //       to: phone_no,
+        //       message: message,
+        //       response: response,
+        //       is_group: 0,
+        //     });
+        //   });
+  
+  
+      } catch (err) {
+        socketAndLog(io, key, "send_message", "Failed", {
+          method_type: "send",
+          to: phone_no,
+          message: message,
+          response: err.message,
+          is_group: 0,
+        });
+  
+        res.status(422).json({
+          status: false,
+          message: err.message,
+        });
+      }
+    });
+
   return router;
 };
