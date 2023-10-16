@@ -219,8 +219,8 @@ module.exports = (io, sessions) => {
       .then((response) => {
         console.log(JSON.stringify(response.data));
 
-        if (response.message) {
-          message.reply(` ${response.message} `);
+        if (response.data) {
+          message.reply(` ${response.data.message} `);
         }
 
         //store log client bot
