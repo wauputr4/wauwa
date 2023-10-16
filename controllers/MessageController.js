@@ -194,9 +194,13 @@ module.exports = (io, sessions) => {
       recitation = message.body.replace(regex, "");
     }
 
+    //remove @c.us on message.from
+    const regex = new RegExp("@c.us");
+    const phone = message.from.replace(regex, "");
+
     const axios = require("axios");
     let data = JSON.stringify({
-      phone: message.from,
+      phone: phone,
       recitation: recitation,
     });
 
