@@ -223,17 +223,39 @@ const createSession = async function (id, description) {
   }
 };
 
+// const init = function (socket) {
+//   const savedSessions = getSessionsFile();
+
+//   if (savedSessions.length > 0) {
+//     if (socket) {
+//       savedSessions.forEach((e, i, arr) => {
+//         // arr[i].ready = false;
+//       });
+//       socket.emit("init", savedSessions);
+//     } else {
+//       savedSessions.forEach((sess) => {
+//         createSession(sess.id, sess.description);
+//       });
+//     }
+//   }
+// };
 const init = function (socket) {
   const savedSessions = getSessionsFile();
 
   if (savedSessions.length > 0) {
-    if (socket) {
+    if (socket && socket.emit) {
       savedSessions.forEach((e, i, arr) => {
         // arr[i].ready = false;
       });
+    }
 
+    // Move the emit outside of the if condition
+    if (socket && socket.emit) {
       socket.emit("init", savedSessions);
-    } else {
+    }
+
+    // Execute this block regardless of whether socket is defined or not
+    else {
       savedSessions.forEach((sess) => {
         createSession(sess.id, sess.description);
       });
