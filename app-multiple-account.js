@@ -63,9 +63,20 @@ const setSessionsFile = function (sessions) {
   });
 };
 
+//const getSessionsFile = function () {
+//  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+//};
+
 const getSessionsFile = function () {
-  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+  try {
+    const fileContent = fs.readFileSync(SESSIONS_FILE, 'utf8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error('Error reading sessions file:', error);
+    return []; // Return an empty array in case of error
+  }
 };
+
 
 const createSession = async function (id, description) {
   console.log(getLogTime() + "Creating session: " + id);
@@ -179,10 +190,10 @@ const createSession = async function (id, description) {
     client.initialize();
 
     // Menghapus pada file sessions
-    const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
-    savedSessions.splice(sessionIndex, 1);
-    setSessionsFile(savedSessions);
+    //const savedSessions = getSessionsFile();
+    //const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
+    //savedSessions.splice(sessionIndex, 1);
+    //setSessionsFile(savedSessions);
 
     io.emit("remove-session", id);
   });
