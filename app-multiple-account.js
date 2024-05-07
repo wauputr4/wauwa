@@ -82,6 +82,8 @@ const createSession = async function (id, description) {
   console.log(getLogTime() + "Creating session: " + id);
   // const browser = await puppeteer.launch({ headless: false });
 
+  const wwebVersion = '2.2412.54';
+
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
@@ -97,6 +99,10 @@ const createSession = async function (id, description) {
       //   '--disable-gpu'
        ],
     },
+    webVersionCache: {
+        type: 'remote',
+        remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
+    },  
     authStrategy: new LocalAuth({
       clientId: id,
     }),
