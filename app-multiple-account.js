@@ -63,29 +63,46 @@ const setSessionsFile = function (sessions) {
   });
 };
 
+//const getSessionsFile = function () {
+//  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+//};
+
 const getSessionsFile = function () {
-  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+  try {
+    const fileContent = fs.readFileSync(SESSIONS_FILE, 'utf8');
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error('Error reading sessions file:', error);
+    return []; // Return an empty array in case of error
+  }
 };
 
 const createSession = async function (id, description) {
   console.log(getLogTime() + "Creating session: " + id);
   // const browser = await puppeteer.launch({ headless: false });
 
+  const wwebVersion = process.env.WWEBVERSION;
+  console.log('wwebVersion :', wwebVersion);
+
   const client = new Client({
     restartOnAuthFail: true,
     puppeteer: {
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        //   '--disable-dev-shm-usage',
-        //   '--disable-accelerated-2d-canvas',
-        //   '--no-first-run',
-        //   '--no-zygote',
-        //   '--single-process', // <- this one doesn't works in Windows
-        //   '--disable-gpu'
-      ],
+       args: [
+         '--no-sandbox',
+         '--disable-setuid-sandbox',
+      //   '--disable-dev-shm-usage',
+      //   '--disable-accelerated-2d-canvas',
+      //   '--no-first-run',
+      //   '--no-zygote',
+      //   '--single-process', // <- this one doesn't works in Windows
+      //   '--disable-gpu'
+       ],
     },
+    webVersionCache: {
+        type: 'remote',
+        remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
+    },  
     authStrategy: new LocalAuth({
       clientId: id,
     }),
@@ -179,10 +196,10 @@ const createSession = async function (id, description) {
     client.initialize();
 
     // Menghapus pada file sessions
-    const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
-    savedSessions.splice(sessionIndex, 1);
-    setSessionsFile(savedSessions);
+    //const savedSessions = getSessionsFile();
+    //const sessionIndex = savedSessions.findIndex((sess) => sess.id == id);
+    //savedSessions.splice(sessionIndex, 1);
+    //setSessionsFile(savedSessions);
 
     io.emit("remove-session", id);
   });

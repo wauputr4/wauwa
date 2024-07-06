@@ -1,0 +1,12 @@
+PORT=7777
+NODE_ENV=development
+DB_TYPE=postgres
+
+DB_CONNECTION=pgsql
+DB_HOST=00.00.00
+DB_PORT=1124
+DB_DATABASE=wa_wauwa
+DB_USERNAME=pendig_kelompok
+DB_PASSWORD=xxxxxxxxxx
+
+WWEBVERSION=2.3000.1014600264-alpha
