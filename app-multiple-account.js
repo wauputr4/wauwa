@@ -63,10 +63,11 @@ const setSessionsFile = function (sessions) {
   });
 };
 
-//const getSessionsFile = function () {
-//  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
-//};
+const getSessionsFile = function () {
+  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+};
 
+/*
 const getSessionsFile = function () {
   try {
     const fileContent = fs.readFileSync(SESSIONS_FILE, 'utf8');
@@ -77,10 +78,14 @@ const getSessionsFile = function () {
   }
 };
 
+*/
+
 
 const createSession = async function (id, description) {
   console.log(getLogTime() + "Creating session: " + id);
   // const browser = await puppeteer.launch({ headless: false });
+
+  const wwebVersion = '2.3000.1012058694-alpha';
 
   const client = new Client({
     restartOnAuthFail: true,
@@ -96,6 +101,10 @@ const createSession = async function (id, description) {
       //   '--single-process', // <- this one doesn't works in Windows
       //   '--disable-gpu'
        ],
+    },
+    webVersionCache: {
+        type: 'remote',
+        remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
     },
     authStrategy: new LocalAuth({
       clientId: id,
