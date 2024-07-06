@@ -77,12 +77,12 @@ const getSessionsFile = function () {
   }
 };
 
-
 const createSession = async function (id, description) {
   console.log(getLogTime() + "Creating session: " + id);
   // const browser = await puppeteer.launch({ headless: false });
 
-  const wwebVersion = '2.2412.54';
+  const wwebVersion = process.env.WWEBVERSION;
+  console.log('wwebVersion :', wwebVersion);
 
   const client = new Client({
     restartOnAuthFail: true,
